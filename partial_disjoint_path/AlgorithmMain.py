@@ -4,6 +4,9 @@ import GraphRandGen as grg
 import networkx as nx
 import copy
 import matplotlib.pyplot as plt
+import sys
+import numpy as np
+INFINITY=sys.maxsize
 def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False):
     #find original shortest path
     node_num=0
@@ -32,7 +35,7 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False)
     for s,t in residual_graph.edges():
         residual_graph.add_edge(s,t,cost=0)
     
-    #For each interior vertex v ∈ P∗ \ {s, t} add v1,v2 with its weight and cost
+    #For each interior vertex v ∈ P∗ \ {s, t} add v1,v2 with its weight and cost 
     for p in shortest_path:
         if p is not start_point_num and p is not des_point_num:
             p1=p+node_num
@@ -66,6 +69,42 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False)
         plt.figure( figsize=(10,10),dpi=80)
         plt.subplot(111)
         nx.draw(graph, with_labels=True, font_weight='light')
-        plt.show()
+        #plt.show()
 
     return residual_graph
+
+def constrained_shortest_path(start_point_num,des_point_num,graph=None,max_com_vertex=0,debug=False):
+    if graph==None:
+        return
+    dyn_mat=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1))
+    for i in range(graph.number_of_nodes()):
+        if i is start_point_num:
+            continue
+        else:
+            for j in range(max_com_vertex+1):
+                dyn_mat[i][j]=INFINITY
+    path=[]
+    con_shortest_path_small(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,path,debug)
+
+    if debug is True:
+        print("the constrained shortest path is\t"+str(path))
+        print(dyn_mat)
+    return path
+
+def con_shortest_path_small(start_point_num,node_id,graph,dyn_mat,max_com_vertex,path,debug):
+    if node_id is start_point_num:
+        return 0 
+
+    in_nodes=graph.predecessors(node_id)
+    
+
+    min_node=graph.number_of_nodes()
+    min_dist=INFINITY
+    for node in in_nodes:
+        cur_dist=con_shortest_path_small(start_point_num,node,graph,dyn_mat,max_com_vertex-graph[node][node_id]["cost"],path,debug)\
+        +graph[node][node_id]["weight"]
+        if cur_dist<min_dist:
+            min_dist=cur_dist
+            min_node=node
+    path.append(min_node)
+    return min_dist
