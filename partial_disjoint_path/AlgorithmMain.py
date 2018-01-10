@@ -6,11 +6,12 @@ import copy
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
-INFINITY=sys.maxsize
+INFINITY=sys.maxsize/2
 def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False):
     #find original shortest path
     node_num=0
     edge_num=0
+    shortest_path=[]
     if graph is None:
         return None
     else:
@@ -71,7 +72,7 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False)
         nx.draw(graph, with_labels=True, font_weight='light')
         #plt.show()
 
-    return residual_graph
+    return shortest_path,residual_graph
 
 def constrained_shortest_path(start_point_num,des_point_num,graph=None,max_com_vertex=0,debug=False):
     if graph==None:
@@ -83,28 +84,64 @@ def constrained_shortest_path(start_point_num,des_point_num,graph=None,max_com_v
         else:
             for j in range(max_com_vertex+1):
                 dyn_mat[i][j]=INFINITY
-    path=[]
-    con_shortest_path_small(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,path,debug)
-
+    #con_shortest_path_small(start_point_num,des_point_num,graph,max_com_vertex,path)
+    path=RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex)
     if debug is True:
-        print("the constrained shortest path is\t"+str(path))
-        print(dyn_mat)
+        print("shortest distance: %d"%(dyn_mat[des_point_num][max_com_vertex]))
     return path
 
-def con_shortest_path_small(start_point_num,node_id,graph,dyn_mat,max_com_vertex,path,debug):
-    if node_id is start_point_num:
-        return 0 
 
-    in_nodes=graph.predecessors(node_id)
+def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex):
+    path=[]
+    path_map=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=int)
+    min_node=0
+
+    for node in range(graph.number_of_nodes()*3):
+        path_map[node][0]=node
+
+
+    for mcv in range(max_com_vertex+1):
+        for node in graph.nodes():
+            if node==start_point_num:
+                dyn_mat[node][mcv]=0
+            if mcv==0 and node!=start_point_num:
+                dyn_mat[node][mcv]=INFINITY
+            if mcv<max_com_vertex:
+                dyn_mat[node][mcv+1]=dyn_mat[node][mcv]
+                path_map[node][mcv+1]=node
+            for succ in graph.successors(node):
+                mcv_next=graph[node][succ]["cost"]+mcv
+                if mcv_next<=max_com_vertex:
+                    old=dyn_mat[succ][mcv_next]
+                    new=dyn_mat[node][mcv]+graph[node][succ]["weight"]
+                    if new<old:
+                        dyn_mat[succ][mcv_next]=new
+                        path_map[succ][mcv_next]=node
     
+    file=open("debug.txt","w+")
+    i=0
+    for line in path_map:
+        file.write(str(i)+"  "+str(line)+"\r\n")
+        i+=1
+    file.write(str(dyn_mat[des_point_num][max_com_vertex]))
+    file.close()
 
-    min_node=graph.number_of_nodes()
-    min_dist=INFINITY
-    for node in in_nodes:
-        cur_dist=con_shortest_path_small(start_point_num,node,graph,dyn_mat,max_com_vertex-graph[node][node_id]["cost"],path,debug)\
-        +graph[node][node_id]["weight"]
-        if cur_dist<min_dist:
-            min_dist=cur_dist
-            min_node=node
-    path.append(min_node)
-    return min_dist
+    cur_node=des_point_num
+    cur_mcv=max_com_vertex
+    next_mcv=cur_mcv
+    while(cur_mcv>=0):
+        next_node=path_map[cur_node][cur_mcv]
+        if next_node==cur_node:
+            next_mcv=cur_mcv-1
+        else:
+            next_mcv=cur_mcv-graph[next_node][cur_node]["cost"]
+        path.append(cur_node)
+        cur_node=next_node
+        cur_mcv=next_mcv
+    path=path[::-1]
+    tmp=[]
+    for node in path:
+        if node not in tmp:
+            tmp.append(node) 
+
+    return tmp,float(dyn_mat[des_point_num][max_com_vertex])
