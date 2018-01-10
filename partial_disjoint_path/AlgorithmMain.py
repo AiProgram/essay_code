@@ -96,7 +96,7 @@ def constrained_shortest_path(start_point_num,des_point_num,graph=None,max_com_v
         print("shortest distance: %d"%(dyn_mat[des_point_num][max_com_vertex]))
     return path
 
-
+# function abandoned
 def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex):
     path=[]
     path_map=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=int)
@@ -110,27 +110,29 @@ def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex)
         for node in graph.nodes():
             if node==start_point_num:
                 dyn_mat[node][mcv]=0
-            if mcv==0 and node!=start_point_num:
-                dyn_mat[node][mcv]=INFINITY
-            if mcv<max_com_vertex:
-                dyn_mat[node][mcv+1]=dyn_mat[node][mcv]
-                path_map[node][mcv+1]=node
-            for succ in graph.successors(node):
-                mcv_next=graph[node][succ]["cost"]+mcv
-                if mcv_next<=max_com_vertex:
-                    old=dyn_mat[succ][mcv_next]
-                    new=dyn_mat[node][mcv]+graph[node][succ]["weight"]
-                    if new<old:
-                        dyn_mat[succ][mcv_next]=new
-                        path_map[succ][mcv_next]=node
+            else:
+                if mcv==0 :
+                    dyn_mat[node][mcv]=INFINITY
+                else:
+                    dyn_mat[node][mcv]=dyn_mat[node][mcv-1]
+                    path_map[node][mcv]=node
+                    for pred in graph.predecessors(node):
+                        mcv_next=graph[node][succ]["cost"]+mcv
+                        if mcv_next<=max_com_vertex:
+                            old=dyn_mat[succ][mcv_next]
+                            new=dyn_mat[node][mcv]+graph[node][succ]["weight"]
+                            if new<old:
+                                dyn_mat[succ][mcv_next]=new
+                                path_map[succ][mcv_next]=node
     
-    file=open("debug.txt","w+")
-    i=0
-    for line in path_map:
-        file.write(str(i)+"  "+str(line)+"\r\n")
-        i+=1
-    file.write(str(dyn_mat[des_point_num][max_com_vertex]))
-    file.close()
+    if debug==True:
+        file=open("debug.txt","w+")
+        i=0
+        for line in path_map:
+            file.write(str(i)+"  "+str(line)+"\r\n")
+            i+=1
+        file.write(str(dyn_mat[des_point_num][max_com_vertex]))
+        file.close()
 
     cur_node=des_point_num
     cur_mcv=max_com_vertex
@@ -151,3 +153,83 @@ def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex)
             tmp.append(node) 
 
     return tmp,float(dyn_mat[des_point_num][max_com_vertex])
+
+# recommand function
+def RSP_with_recursion(graph,start_point_num,des_point_num,max_com_vertex):
+    #the following mamory usages can be improved
+    visited=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=bool)
+    pred=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=int)
+    dyn_mat=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=float)
+
+    for node in range(graph.number_of_nodes()*3):
+        for mcv in range(max_com_vertex+1):
+            dyn_mat[node][mcv]=-1
+
+    dist=RSP_recursion_small(graph,start_point_num,des_point_num,max_com_vertex,dyn_mat,visited,pred)
+
+#    for i in range(graph.number_of_nodes()*3):
+#       print(str(i)+"  "+str(pred[i]))
+
+    path=[]
+
+    if dist>=INFINITY-1:
+        print("cannot find a path that satisfy the restriction")
+    else:
+        cur_node=des_point_num
+        cur_mcv=max_com_vertex
+        next_mcv=cur_mcv
+        while cur_node!=start_point_num:
+            next_node=pred[cur_node][cur_mcv]
+            if next_node==cur_node:
+                next_mcv=cur_mcv-1
+            else:
+                next_mcv=cur_mcv-graph[next_node][cur_node]["cost"]
+            path.append(cur_node)
+            cur_node=next_node
+            cur_mcv=next_mcv
+    path.append(start_point_num)
+    
+    path=path[::-1]
+    tmp=[]
+    for node in path:
+        if node not in tmp:
+            tmp.append(node)
+    path=tmp
+    return dist,path
+
+# sub function of "RSP_with_recursion()"
+def RSP_recursion_small(graph,start_point_num,des_point_num,max_com_vertex,dyn_mat,visited,pred):
+    if dyn_mat[des_point_num][max_com_vertex]!=-1:
+        return dyn_mat[des_point_num][max_com_vertex]
+
+    if des_point_num==start_point_num:
+        dyn_mat[des_point_num][max_com_vertex]=0
+        return 0
+
+    if max_com_vertex==0:
+        dyn_mat[des_point_num][max_com_vertex]=INFINITY
+        return INFINITY
+
+    min_node=des_point_num
+    min_dist=RSP_recursion_small(graph,start_point_num,des_point_num,max_com_vertex-1,dyn_mat,visited,pred)
+    for node in graph.predecessors(des_point_num):
+        if max_com_vertex>=graph[node][des_point_num]["cost"]:
+            new_com_vertex=max_com_vertex-graph[node][des_point_num]["cost"]
+
+            if(visited[node][new_com_vertex]==True):
+                continue
+            visited[node][new_com_vertex]=True
+
+            cur_dist=RSP_recursion_small(graph,start_point_num,node,new_com_vertex,dyn_mat,visited,pred)+\
+            graph[node][des_point_num]["weight"]
+
+            
+
+            if cur_dist<min_dist:
+                min_dist=cur_dist
+                min_node=node
+
+    pred[des_point_num][max_com_vertex]=min_node
+    dyn_mat[des_point_num][max_com_vertex]=min_dist
+
+    return min_dist
