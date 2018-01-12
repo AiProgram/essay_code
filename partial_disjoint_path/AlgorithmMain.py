@@ -233,3 +233,44 @@ def RSP_recursion_small(graph,start_point_num,des_point_num,max_com_vertex,dyn_m
     dyn_mat[des_point_num][max_com_vertex]=min_dist
 
     return min_dist
+
+def path_XOR(graph,residual_graph,path_p,path_q):
+    #merge the splitted node in path_q
+    node_number=graph.number_of_nodes()
+    for index in range(len(path_q)):
+        if path_q[index]>=2*node_number:
+            path_q[index]-=2*node_number
+        elif path_q[index]>=node_number:
+            path_q[index]-=node_number
+
+    tmp=[]
+    for node in path_q:
+        if node not in tmp:
+            tmp.append(node)
+    path_q=tmp
+
+    #find parrallel edges in both path
+    edges_p=[]
+    for index in range(len(path_p)-1):
+        edges_p.append((path_p[index],path_p[index+1]))
+    parrallel_edge=[]
+    for index in range(len(path_q)-1):
+        if (path_q[index+1],path_q[index]) in edges_p:
+            parrallel_edge.append((path_q[index+1],path_q[index]))
+    
+    #delete the parrallel edges
+    tmp=[]
+    for index in range(len(path_p)-1):
+        if (path_p[index],path_p[index+1]) not in parrallel_edge:
+          tmp.append(path_p[index])
+    tmp.append(path_p[index+1])
+    path_p=tmp
+
+    tmp=[]
+    for index in range(len(path_q)-1):
+        if(path_q[index+1],path_q[index]) not in parrallel_edge:
+            tmp.append(path_q[index])
+    tmp.append(path_q[index+1])
+    path_q=tmp
+
+    return path_p,path_q

@@ -12,7 +12,7 @@ if __name__=="__main__":
     start_point_num=0
     des_point_num=6
 
-    graph=grg.generate_graph_random(node_number,edge_number)
+    graph=grg.generate_graph_from_src()
     path_p,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph,debug=False)
     #path_Q,dist=am.constrained_shortest_path(start_point_num,des_point_num,residual_graph,max_com_vertex,debug=False)
     dist,path_Q=am.RSP_with_recursion(residual_graph,start_point_num,des_point_num,max_com_vertex)
@@ -21,3 +21,6 @@ if __name__=="__main__":
     print("Q path "+str(path_Q))
     print("the sum of path Q 's weight is %f"%(dist))
     print("validate path Q: "+str(util.verify_RSP_result(residual_graph,path_Q,max_com_vertex)))
+    path_p1,path_p2=am.path_XOR(graph,residual_graph,path_p,path_Q)
+    print("path_p1: "+str(path_p1))
+    print("path_p2: "+str(path_p2))
