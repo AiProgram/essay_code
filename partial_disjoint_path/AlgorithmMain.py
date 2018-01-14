@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 INFINITY=sys.maxsize/2
-def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False):
+def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,SCALE=50):
     #find original shortest path
     node_num=0
     edge_num=0
@@ -35,7 +35,7 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False)
 
     # For each edge e ∈G' Set c(e) := 0
     for s,t in residual_graph.edges():
-        residual_graph.add_edge(s,t,cost=0)
+        residual_graph.add_edge(s,t,cost=1)
 
     
     #For each interior vertex v ∈ P∗ \ {s, t} add v1,v2 with its weight and cost 
@@ -43,8 +43,8 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False)
         if p != start_point_num and p != des_point_num:
             p1=p+node_num
             p2=p+2*node_num
-            residual_graph.add_edge(p1,p2,weight=0,cost=1)
-            residual_graph.add_edge(p2,p1,weight=0,cost=0)
+            residual_graph.add_edge(p1,p2,weight=0,cost=SCALE)
+            residual_graph.add_edge(p2,p1,weight=0,cost=1)
     
     #
     for u,v in graph.edges():
@@ -57,20 +57,20 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False)
                 u2=u+2*node_num
             if v is not start_point_num and v is not des_point_num:
                 v1=v+node_num
-            residual_graph.add_edge(v1,u2,weight=-w,cost=0)
+            residual_graph.add_edge(v1,u2,weight=-w,cost=1)
         else:
             #u ∈ P∗ \ {s, t}
             if shortest_path.count(u)>0 and u!=start_point_num and u!=des_point_num:
                 u2=u+2*node_num
                 if shortest_path.count(v)>0 and v!=start_point_num and v!=des_point_num:
                     v+=node_num
-                residual_graph.add_edge(u2,v,weight=w,cost=0)
+                residual_graph.add_edge(u2,v,weight=w,cost=1)
             #v ∈ P∗ \ {s, t}
             if shortest_path.count(v)>0 and v!=start_point_num and v!=des_point_num:
                 v1=v+node_num
                 if shortest_path.count(u)>0 and u!=start_point_num and u!=des_point_num:
                     u+=2*node_num
-                residual_graph.add_edge(u,v1,weight=w,cost=0)
+                residual_graph.add_edge(u,v1,weight=w,cost=1)
 
     if debug is True:
         plt.figure( figsize=(10,10),dpi=80)
@@ -91,40 +91,38 @@ def constrained_shortest_path(start_point_num,des_point_num,graph=None,max_com_v
             for j in range(max_com_vertex+1):
                 dyn_mat[i][j]=INFINITY
     #con_shortest_path_small(start_point_num,des_point_num,graph,max_com_vertex,path)
-    path=RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex)
+    path=RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,debug)
     if debug is True:
         print("shortest distance: %d"%(dyn_mat[des_point_num][max_com_vertex]))
     return path
 
 # function abandoned
-def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex):
+def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,debug=False):
     path=[]
     path_map=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=int)
     min_node=0
 
-    for node in range(graph.number_of_nodes()*3):
-        path_map[node][0]=node
-
-
     for mcv in range(max_com_vertex+1):
-        for node in graph.nodes():
-            if node==start_point_num:
-                dyn_mat[node][mcv]=0
-            else:
-                if mcv==0 :
-                    dyn_mat[node][mcv]=INFINITY
-                else:
-                    dyn_mat[node][mcv]=dyn_mat[node][mcv-1]
-                    path_map[node][mcv]=node
-                    for pred in graph.predecessors(node):
-                        mcv_next=graph[node][succ]["cost"]+mcv
-                        if mcv_next<=max_com_vertex:
-                            old=dyn_mat[succ][mcv_next]
-                            new=dyn_mat[node][mcv]+graph[node][succ]["weight"]
-                            if new<old:
-                                dyn_mat[succ][mcv_next]=new
-                                path_map[succ][mcv_next]=node
+        dyn_mat[start_point_num][mcv]=0
     
+    for node in range(graph.number_of_nodes()*3):
+        if node != start_point_num:
+            dyn_mat[node][0]=INFINITY
+
+    for mcv in range(1,max_com_vertex+1):
+        for node in graph.nodes():
+            if node != start_point_num:
+                min_node=node
+                min_dist=dyn_mat[node][mcv-1]
+                for pred in graph.predecessors(node):
+                    if graph[pred][node]["cost"]<=mcv:
+                        new_mcv=mcv-graph[pred][node]["cost"]
+                        new_dist=dyn_mat[pred][new_mcv]+graph[pred][node]["weight"]
+                        if new_dist< min_dist:
+                            min_dist=new_dist
+                            min_node=pred
+                path_map[node][mcv]=min_node
+        
     if debug==True:
         file=open("debug.txt","w+")
         i=0
@@ -157,7 +155,8 @@ def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex)
 # recommand function
 def RSP_with_recursion(graph,start_point_num,des_point_num,max_com_vertex):
     #the following mamory usages can be improved
-    visited=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=bool)
+    #visited=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=bool)
+    visited=None
     pred=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=int)
     dyn_mat=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=float)
 
@@ -216,9 +215,9 @@ def RSP_recursion_small(graph,start_point_num,des_point_num,max_com_vertex,dyn_m
         if max_com_vertex>=graph[node][des_point_num]["cost"]:
             new_com_vertex=max_com_vertex-graph[node][des_point_num]["cost"]
 
-            if(visited[node][new_com_vertex]==True):
-                continue
-            visited[node][new_com_vertex]=True
+#            if(visited[node][new_com_vertex]==True):
+#               continue
+#            visited[node][new_com_vertex]=True
 
             cur_dist=RSP_recursion_small(graph,start_point_num,node,new_com_vertex,dyn_mat,visited,pred)+\
             graph[node][des_point_num]["weight"]
