@@ -301,6 +301,7 @@ def get_graph_for_LP(graph,start_point_num,des_point_num):
             u2=u
         else:
             u2=u+node_number
+        print("%d,%d"%(u2,v1))
         LP_graph.add_edge(u2,v1,weight=w,cost=0)
 
     #Add an edge (v 1 , v 2 ) with cost 1 and weight 0 in G'

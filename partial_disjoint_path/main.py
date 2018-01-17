@@ -7,11 +7,11 @@ import random
 SCALE=20
 if __name__=="__main__":
     max_com_vertex=10
-    node_number=20
-    edge_number=200
+    node_number=10
+    edge_number=40
     start_point_num=0
     des_point_num=6
-    json_graph_file_name="partial_disjoint_path\\data\\json_graph.json"
+    json_graph_file_name="partial_disjoint_path\\java_code\\graph_data\\json_graph.json"
 
     #generate random graph
     graph=grg.generate_graph_random(node_number,edge_number)
