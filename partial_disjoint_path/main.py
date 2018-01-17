@@ -4,15 +4,22 @@ import GraphRandGen as grg
 import AlgorithmMain as am
 import utilities as util
 import random
-SCALE=50
+SCALE=20
 if __name__=="__main__":
-    max_com_vertex=2
-    node_number=100
-    edge_number=2000
+    max_com_vertex=10
+    node_number=20
+    edge_number=200
     start_point_num=0
     des_point_num=6
+    json_graph_file_name="partial_disjoint_path\\data\\json_graph.json"
 
+    #generate random graph
     graph=grg.generate_graph_random(node_number,edge_number)
+
+    #save graph into a json file 
+    LP_graph=am.get_graph_for_LP(graph,start_point_num,des_point_num)
+    util.save_graph_to_json(LP_graph,json_graph_file_name)
+
     path_p,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph,debug=False)
     #path_Q,dist=am.constrained_shortest_path(start_point_num,des_point_num,residual_graph,max_com_vertex,debug=True)
     dist,path_Q=am.RSP_with_recursion(residual_graph,start_point_num,des_point_num,max_com_vertex*SCALE)
