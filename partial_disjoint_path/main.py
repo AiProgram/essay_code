@@ -7,8 +7,8 @@ import random
 SCALE=20
 if __name__=="__main__":
     max_com_vertex=10
-    node_number=10
-    edge_number=40
+    node_number=50
+    edge_number=1000
     start_point_num=0
     des_point_num=6
     json_graph_file_name="partial_disjoint_path\\java_code\\graph_data\\json_graph.json"
@@ -17,7 +17,7 @@ if __name__=="__main__":
     graph=grg.generate_graph_random(node_number,edge_number)
 
     #save graph into a json file 
-    LP_graph=am.get_graph_for_LP(graph,start_point_num,des_point_num)
+    LP_graph=am.get_graph_for_LP(graph,start_point_num,des_point_num,max_com_vertex)
     util.save_graph_to_json(LP_graph,json_graph_file_name)
 
     path_p,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph,debug=False)

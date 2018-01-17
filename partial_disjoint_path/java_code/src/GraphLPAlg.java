@@ -27,17 +27,15 @@ public class GraphLPAlg {
         public int weight;
         public int cost;
     }
-    public class DoubleDimEdges
-    {
-        public List<Edge>inEdges;
-        public List<Edge>outEdges;
-    }
     public class Graph
     {
         int nodeNumber;
         int edgeNumber;
         int nodes[];
-        Map<Integer, DoubleDimEdges>edgesMap;
+        int start_point;
+        int dest_point;
+        int bound;
+        List<Edge> edges;
     }
 
     private String readJsonGraph(String fileName)
@@ -83,9 +81,13 @@ public class GraphLPAlg {
         JSONArray  edgesArr=new JSONArray();
         edgesArr=jsonObject.getJSONArray("links");
 
+
         Graph graph=new Graph();
         graph.nodeNumber=nodesArr.length();
-        graph.edgeNumber=nodesArr.length();
+        JSONObject graphObject=jsonObject.getJSONObject("graph");
+        graph.start_point=graphObject.getInt("S");
+        graph.dest_point=graphObject.getInt("T");
+        graph.bound=graphObject.getInt("bound");
 
 
 
@@ -100,14 +102,7 @@ public class GraphLPAlg {
 
 
         //deal with the edges
-        graph.edgesMap=new HashMap<>();
-        for(int i=0;i<graph.nodeNumber;i++)
-        {
-                DoubleDimEdges doubleDimEdges=new DoubleDimEdges();
-                doubleDimEdges.inEdges=new ArrayList<>();
-                doubleDimEdges.outEdges=new ArrayList<>();
-                graph.edgesMap.put(graph.nodes[i],doubleDimEdges);
-        }
+        graph.edges=new ArrayList<>();
         for(int i=0;i<edgesArr.length();i++)
         {
             JSONObject tmpObject=edgesArr.getJSONObject(i);
@@ -115,30 +110,87 @@ public class GraphLPAlg {
             target=tmpObject.getInt("target");
             weight=tmpObject.getInt("weight");
             cost=tmpObject.getInt("cost");
-            try {
-                realSrc=graph.nodes[source];
-                realTar=graph.nodes[target];
-                DoubleDimEdges srcV = graph.edgesMap.get(realSrc);
-                DoubleDimEdges tarV = graph.edgesMap.get(realTar);
-                srcV.outEdges.add(new Edge(realSrc, realTar, weight, cost));
-                tarV.inEdges.add(new Edge(realSrc, realTar, weight, cost));
-            }catch (Exception e){
-                e.printStackTrace();
-                System.out.println(source+"-->"+target);
+            realSrc=graph.nodes[source];
+            realTar=graph.nodes[target];
+            graph.edges.add(new Edge(realSrc,realTar,weight,cost));
+            //The graph with duplicates are too complex, so we add the second duplicator here
+            if(cost==1)
+            {
+                graph.edges.add(new Edge(realSrc,realTar,0,0));
             }
         }
+
+        graph.edgeNumber=graph.edges.size();
         return graph;
     }
 
-    public void getAlgLPFile()
+    public void getAlgLPFile(Graph graph,String lpFileName)
     {
+        float c[];
 
+        float a3[][];
+        float b3[];
+        float a1[][];
+        float b1[];
+
+        float d1[];
+        float d2[];
+
+        LPGenerator lpGenerator=new LPGenerator();
+
+        c=new float[graph.edgeNumber];
+        for(int i=0;i<c.length;i++)
+        {
+            Edge edge=graph.edges.get(i);
+            c[i]=edge.weight;
+        }
+        lpGenerator.setExpression(LPGenerator.ExpType.Minmize,c);
+
+        a3=new float[graph.nodeNumber-1][graph.edgeNumber];
+        b3=new float[graph.nodeNumber-1];
+        for(int i=0,j=0;i<graph.nodeNumber;i++)
+        {
+            int node=graph.nodes[i];
+            if(node==graph.dest_point) continue;
+            for(int k=0;k<graph.edgeNumber;k++)
+            {
+                Edge edge=graph.edges.get(k);
+                if(edge.source==node)
+                {
+                    a3[j][k]=1;
+                }else if(edge.target==node) {
+                    a3[j][k]=-1;
+                }else{
+                    a3[j][k]=0;
+                }
+            }
+            if(node==graph.start_point)
+            {
+                b3[j]=2;
+            }else{
+                b3[j]=0;
+            }
+            j++;
+        }
+        a1=new float[1][graph.edgeNumber];
+        b1=new float[1];
+        for(int i=0;i<graph.edgeNumber;i++)
+        {
+            Edge edge=graph.edges.get(i);
+            a1[0][i]=edge.cost;
+        }
+        b1[0]=graph.bound;
+
+        lpGenerator.setConstraints(a1,null,a3,b1,null,b3);
+        lpGenerator.setVariable(LPGenerator.VarType.INT,graph.edgeNumber,null,null);
+        lpGenerator.generateLPFile(lpFileName);
     }
 
     public  void test()
     {
         String graphData=readJsonGraph("./graph_data/json_graph.json");
         Graph graph=parseJsonToGraph(graphData);
+        getAlgLPFile(graph,"test");
     }
 
     public static  void main(String args[]){

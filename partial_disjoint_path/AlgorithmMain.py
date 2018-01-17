@@ -274,7 +274,7 @@ def path_XOR(graph,residual_graph,path_p,path_q):
 
     return path_p,path_q
 
-def get_graph_for_LP(graph,start_point_num,des_point_num):
+def get_graph_for_LP(graph,start_point_num,des_point_num,max_com_vertex):
     """construct G' for the lp algorithm"""
     LP_graph=nx.DiGraph()
     LP_graph.add_node(start_point_num)
@@ -301,7 +301,6 @@ def get_graph_for_LP(graph,start_point_num,des_point_num):
             u2=u
         else:
             u2=u+node_number
-        print("%d,%d"%(u2,v1))
         LP_graph.add_edge(u2,v1,weight=w,cost=0)
 
     #Add an edge (v 1 , v 2 ) with cost 1 and weight 0 in G'
@@ -309,5 +308,7 @@ def get_graph_for_LP(graph,start_point_num,des_point_num):
         if node==start_point_num or node==des_point_num:
             continue
         LP_graph.add_edge(node,node+node_number,weight=0,cost=1)
-    
+    LP_graph.graph["S"]=start_point_num
+    LP_graph.graph["T"]=des_point_num
+    LP_graph.graph["bound"]=max_com_vertex
     return LP_graph
