@@ -159,7 +159,7 @@ public class LPGenerator {
             else elemBuilder.append(" ").append(a[n][i]).append(" x_").append(i);
             allZero=false;
         }
-        System.out.println(allZero);
+        //System.out.println(allZero);
         if(allZero) return "";//当所有的系数均为0返回空式子
         curCon++;
         //deal with the last '+' that might be useless
