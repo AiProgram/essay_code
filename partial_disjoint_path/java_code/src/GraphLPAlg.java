@@ -1,12 +1,13 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import jdk.jshell.spi.ExecutionControlProvider;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONWriter;
 
 public class GraphLPAlg {
     public class Edge
@@ -186,15 +187,138 @@ public class GraphLPAlg {
         lpGenerator.generateLPFile(lpFileName);
     }
 
+    public void getLPGroup()
+    {
+        String graphDataFolder="./graph_data/";
+        try
+        {
+            File dataFile=new File(graphDataFolder+"data.json");
+            FileReader dataReader=new FileReader(dataFile);
+            BufferedReader bufDataReader=new BufferedReader(dataReader);
+            StringBuilder dataStr=new StringBuilder();
+            String tmp;
+            while((tmp=bufDataReader.readLine())!=null)
+            {
+                dataStr.append(tmp);
+            }
+            JSONObject recMain=new JSONObject(dataStr.toString());
+
+            int fileNumber=recMain.getInt("file_number");
+            int repeateTime=recMain.getInt("repeate_time");
+
+            JSONArray fileRecArr=recMain.getJSONArray("file_Rec_Arr");
+            for(int i=0;i<fileNumber;i++)
+            {
+                JSONObject fileRec=fileRecArr.getJSONObject(i);
+                String lpGraphFile=fileRec.getString("lp_graph_file");
+                String graphData=readJsonGraph(graphDataFolder+lpGraphFile);
+                Graph graph=parseJsonToGraph(graphData);
+                String lpFileName=lpGraphFile.split("\\.")[0];
+                getAlgLPFile(graph,lpFileName);
+                fileRec.put("lp_file",lpFileName+".lp");
+            }
+            dataReader.close();
+
+            FileWriter dataWriter=new FileWriter(dataFile);
+            dataWriter.write(recMain.toString());
+            dataWriter.flush();
+            dataWriter.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    public void runCodeGroup()
+    {
+        String curPath=System.getProperty("user.dir");
+        String graphDataFolder=curPath+"\\graph_data\\";
+        String outPutFolder=curPath+"\\solFiles\\";
+        String lpFolder=curPath+"\\lpFiles\\";
+        String glpkPath="E:\\ProgramFiles\\glpk-4.63\\w64\\glpsol";
+        try {
+            File dataFile = new File(graphDataFolder + "data.json");
+            FileReader dataReader = new FileReader(dataFile);
+            BufferedReader bufDataReader = new BufferedReader(dataReader);
+            StringBuilder dataStr = new StringBuilder();
+            String tmp;
+            while ((tmp = bufDataReader.readLine()) != null) {
+                dataStr.append(tmp);
+            }
+            JSONObject recMain = new JSONObject(dataStr.toString());
+            JSONArray  fileRecArr=recMain.getJSONArray("file_Rec_Arr");
+
+            int repeateTime=recMain.getInt("repeate_time");
+            for(int i=0;i<fileRecArr.length();i++)
+            {
+                JSONObject fileRec=fileRecArr.getJSONObject(i);
+                String lpFile=fileRec.getString("lp_file");
+
+                //System.out.println(lpFile);
+
+                String solFile=lpFile.split("\\.")[0]+".sol";
+                lpFile=lpFolder+lpFile;
+                solFile=outPutFolder+solFile;
+
+                String cmd=glpkPath+" --cpxlp "+lpFile+" -o "+solFile;
+                long timeAll=0;
+                long start=System.currentTimeMillis();
+                for(int j=0;j<repeateTime;j++)
+                {
+                    //System.out.println("repeate: "+j);
+                    exeCmd(cmd);
+                }
+                long end=System.currentTimeMillis();
+                timeAll=end-start;
+                System.out.println(start+" "+end+" "+timeAll);
+                Double time=(timeAll/1000.0)/repeateTime;
+                fileRec.put("lp_alg_run_time",time);
+                fileRec.put("lp_alg_complete",true);
+            }
+            dataReader.close();
+
+            FileWriter dataWriter=new FileWriter(dataFile);
+            dataWriter.write(recMain.toString());
+            dataWriter.flush();
+            dataWriter.close();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
     public  void test()
     {
-        String graphData=readJsonGraph("./graph_data/json_graph.json");
-        Graph graph=parseJsonToGraph(graphData);
-        getAlgLPFile(graph,"test");
+        getLPGroup();
+        runCodeGroup();
     }
 
     public static  void main(String args[]){
         GraphLPAlg graphLPAlg=new GraphLPAlg();
         graphLPAlg.test();
+    }
+
+    public static String exeCmd(String commandStr) {
+        BufferedReader br = null;
+        StringBuilder sb = new StringBuilder();
+        try {
+            Process p = Runtime.getRuntime().exec(commandStr);
+            br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+            //System.out.println(sb.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally
+        {
+            if (br != null)
+            {
+                try {
+                    br.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return sb.toString();
     }
 }

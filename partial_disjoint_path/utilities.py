@@ -1,16 +1,19 @@
 import GraphRandGen as grg
 import AlgorithmMain as am
 import os
+import time
 import networkx as nx
 from networkx.readwrite import json_graph
 import numpy as np
 import json
 # the following two classes is used to record the data of code's running
+graph_data_folder="D:\PythonProject\Essays\code\partial_disjoint_path\java_code\graph_data\\"
 class RunCodeRecMain:
     repeate_time=20
     file_number=0
     file_Rec_Arr=[]
-
+    new_run_time=0
+    lp_run_time=0
     def to_object(self):
         out={}
         out["repeate_time"]=self.repeate_time
@@ -19,6 +22,8 @@ class RunCodeRecMain:
         for rec in self.file_Rec_Arr:
             tmp.append(rec.to_object())
         out["file_Rec_Arr"]=tmp
+        out["new_run_time"]=self.new_run_time
+        out["lp_run_time"]=self.lp_run_time
         return out
 class FileRec:
     #without extend name
@@ -53,7 +58,7 @@ class FileRec:
         return out
 
 def generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_point_num,des_point_num,repeate_time):
-    os.chdir("D:\PythonProject\Essays\code\partial_disjoint_path\java_code\graph_data\\")
+    os.chdir(graph_data_folder)
     con_file=open("data.json","w+")
     rec_main=RunCodeRecMain()
     rec_main.file_number=0
@@ -61,6 +66,8 @@ def generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_
 
     for n in range(graph_num):
         graph=grg.generate_graph_random(node_number,edge_number)
+        graph.graph["S"]=start_point_num
+        graph.graph["T"]=des_point_num
         LP_graph=am.get_graph_for_LP(graph,start_point_num,des_point_num,max_com_vertex)
         graph_name="ori_"+str(node_number)+"_"+str(edge_number)+"_"+str(max_com_vertex)+"_"+str(n)+".json"
         LP_graph_name="lp_"+str(node_number)+"_"+str(edge_number)+"_"+str(max_com_vertex)+"_"+str(n)+".json"
@@ -80,6 +87,62 @@ def generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_
         save_graph_to_json(LP_graph,LP_graph_name)
         rec_main.file_number+=1
     json.dump(rec_main.to_object(),con_file)
+    con_file.close()
+
+def run_code_group(SCALE):
+    os.chdir(graph_data_folder)
+    con_file=open("data.json","r")
+    rec_object=json.load(con_file)
+
+    repeate_time=20
+    file_number=0
+    file_Rec_Arr=[]
+    new_run_time=0
+    lp_run_time=0
+
+    repeate_time=rec_object["repeate_time"]
+    file_number=rec_object["file_number"]
+    file_Rec_Arr=rec_object["file_Rec_Arr"]
+    new_run_time=rec_object["new_run_time"]
+    lp_run_time=rec_object["lp_run_time"]
+
+    time_all=0
+    for rec_file in file_Rec_Arr:
+        if rec_file["new_alg_complete"] is True:
+            time_all+=rec_file["new_alg_run_time"]
+            continue
+        else:
+            origin_graph_file=rec_file["origin_graph_file"]
+            max_com_vertex=rec_file["max_com_vertex"]
+            time_sum=0
+            graph_file=open(origin_graph_file,"r")
+            graph=json_graph.node_link_graph(json.load(graph_file))
+            start_point_num=graph.graph["S"]
+            des_point_num=graph.graph["T"]
+            for n in range(repeate_time):
+                time_start=time.time()
+                try:
+                    path_P,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph)
+                    dist,path_Q=am.RSP_with_recursion(residual_graph,start_point_num,des_point_num,max_com_vertex*SCALE)
+                except:
+                    pass
+                time_end=time.time()
+                time_sum+=(time_end-time_start)
+            time_sum=time_sum/repeate_time
+            rec_file["new_alg_run_time"]=time_sum/SCALE
+            rec_file["new_alg_complete"]=True
+            time_all+=time_sum
+            graph_file.close()
+
+            print("file %s complete"%(rec_file["origin_graph_file"]))
+
+    time_all=time_all/file_number
+    rec_object["new_run_time"]=time_all
+    con_file.close()
+    con_file=open("data.json","w+")
+    json.dump(rec_object,con_file)
+    con_file.close()
+
 
 def verify_RSP_result(graph,path,max_com_vertex):
     success=True
