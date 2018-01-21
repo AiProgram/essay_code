@@ -122,10 +122,17 @@ def run_code_group(SCALE):
             for n in range(repeate_time):
                 time_start=time.time()
                 try:
-                    path_P,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph)
-                    dist,path_Q=am.RSP_with_recursion(residual_graph,start_point_num,des_point_num,max_com_vertex*SCALE)
-                except:
+                    #path_P,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph)
+                    #dist,path_Q=am.RSP_with_recursion(residual_graph,start_point_num,des_point_num,max_com_vertex*SCALE)
+                    #print("the total weight is %f"%(dist+get_SP_weight(graph,path_P)))
                     pass
+                except BaseException as e:
+                    print(format(e))
+                weight_sum,path=am.mwld_alg(graph,start_point_num,des_point_num,max_com_vertex)
+                print(weight_sum)
+                print(path)
+                print("-----------")
+
                 time_end=time.time()
                 time_sum+=(time_end-time_start)
             time_sum=time_sum/repeate_time

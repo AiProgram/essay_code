@@ -8,10 +8,10 @@ import time
 SCALE=5
 if __name__=="__main__":
     max_com_vertex=10
-    node_number=1000
-    edge_number=100000
+    node_number=50
+    edge_number=250
     start_point_num=0
-    des_point_num=200
+    des_point_num=10
     repeate_time=1
     graph_num=20
     util.generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_point_num,des_point_num,repeate_time)

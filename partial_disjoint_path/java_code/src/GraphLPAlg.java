@@ -111,8 +111,8 @@ public class GraphLPAlg {
             target=tmpObject.getInt("target");
             weight=tmpObject.getInt("weight");
             cost=tmpObject.getInt("cost");
-            realSrc=graph.nodes[source];
-            realTar=graph.nodes[target];
+            realSrc=source;
+            realTar=target;
             graph.edges.add(new Edge(realSrc,realTar,weight,cost));
             //The graph with duplicates are too complex, so we add the second duplicator here
             if(cost==1)

@@ -6,6 +6,7 @@ import copy
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
+import utilities as util
 INFINITY=sys.maxsize/2
 def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,SCALE=50):
     #find original shortest path
@@ -312,3 +313,114 @@ def get_graph_for_LP(graph,start_point_num,des_point_num,max_com_vertex):
     LP_graph.graph["T"]=des_point_num
     LP_graph.graph["bound"]=max_com_vertex
     return LP_graph
+
+def mwld_alg(graph,start_point_num,des_point_num,max_com_vertex):
+    """the main function of mwld algorithm"""
+    aux_graph=mwld_get_aux_graph(graph)
+    w,path=RSP_with_recursion(aux_graph,start_point_num,des_point_num,max_com_vertex)
+    return w,path
+
+def get_SP_reverse_graph(graph,shortest_path):
+    reverse_graph=copy.deepcopy(graph)
+    for index in range(len(shortest_path)-1):
+            point_u=shortest_path[index]
+            point_v=shortest_path[index+1]
+            w=graph[point_u][point_v]["weight"]
+            reverse_graph.remove_edge(point_u,point_v)
+            reverse_graph.add_edge(point_v,point_u,weight=-w)
+    return reverse_graph
+
+def mwld_path_xor(path_p,path_q):
+    """get the pair of shortest path"""
+    #we assume that the path_p is the path in original graph and path_q is in the reverse graph
+    #which means that the reversed edge is in path_q and not in path-p
+    path_p1=[]
+    path_p2=[]
+    path_graph=nx.DiGraph()
+    for node in path_p:
+        path_graph.add_node(node)
+    for node in path_q:
+        path_graph.add_node(node)
+
+    edge_p1=[]
+    for index in range(len(path_p)-1):
+        edge_p1.append((path_p[index],path_p[index+1]))
+    edge_shared=[]
+    for index in range(len(path_q)-1):
+        if (path_q[index+1],path_q[index]) in edge_p1:
+            edge_shared.append((path_q[index+1],path_q[index]))
+        else:
+            path_graph.add_edge(path_q[index],path_q[index+1])
+    for index in range(len(path_p)-1):
+        if (path_p[index],path_p[index+1]) not in edge_shared:
+            path_graph.add_edge(path_p[index],path_p[index+1])
+    
+    
+    s=path_p[0]
+    #Because there is no common edge, we know that the two neighbours of the starting point are not the same.
+    s_succ=list(path_graph.successors(s))
+    
+
+    path_p1.append(s)
+    now=s_succ[0]
+    path_p1.append(now)
+    tmp=list(path_graph.successors(now))
+    while len(tmp)>0:
+        now=tmp[0]
+        path_p1.append(now)
+        tmp=list(path_graph.successors(now))
+
+    path_p2.append(s)
+    now=s_succ[1]
+    path_p2.append(now)
+    tmp=list(path_graph.successors(now))
+    while len(tmp)>0:
+        now=tmp[0]
+        path_p2.append(now)
+        tmp=list(path_graph.successors(now))
+
+    return path_p1,path_p2
+
+def mwld_get_aux_graph_edge(graph,point_s,point_t):
+    """Get the edges between two points in the auxiliary graph for mwld alogrithm"""
+    try:
+        path_p=nx.bellman_ford_path(graph,point_s,point_t,"weight")
+    except:
+        return 0,None,None
+    if path_p is None:
+        return 0,None,None
+    
+    reverse_graph=get_SP_reverse_graph(graph,path_p)
+    try:
+        path_q=nx.bellman_ford_path(reverse_graph,point_s,point_t,"weight")
+    except:
+        return 0,None,None
+    if path_q is None:
+        return 0,None,None
+    del reverse_graph
+
+    path_p1,path_p2=mwld_path_xor(path_p,path_q)
+    #print("P: "+str(path_p)+"  Q: "+str(path_q))
+    #print("p1: "+str(path_p1)+"  p2: "+str(path_p2))
+    w_p1=util.get_SP_weight(graph,path_p1)
+    w_p2=util.get_SP_weight(graph,path_p2)
+    w_sum=w_p1+w_p2
+    return w_sum,path_p1,path_p2
+
+def mwld_get_aux_graph(graph):
+    """Get an auxiliary graph for mwld algorithm"""
+    aux_graph=nx.DiGraph()
+    for node in graph.nodes():
+        aux_graph.add_node(node)
+    
+    for point_s in graph.nodes():
+        for point_t in graph.nodes():
+            if point_s==point_t:
+                continue
+            else:
+                w_sum,path_p1,path_p2=mwld_get_aux_graph_edge(graph,point_s,point_t)
+                if path_p1==None or path_p2==None:
+                    continue
+                else:
+                    aux_graph.add_edge(point_s,point_t,weight=w_sum,cost=1)
+    return aux_graph
