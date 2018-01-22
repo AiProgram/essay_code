@@ -9,11 +9,13 @@ import json
 # the following two classes is used to record the data of code's running
 graph_data_folder="D:\PythonProject\Essays\code\partial_disjoint_path\java_code\graph_data\\"
 class RunCodeRecMain:
+    """the class used to record the main data of files in the folder"""
     repeate_time=20
     file_number=0
     file_Rec_Arr=[]
     new_run_time=0
     lp_run_time=0
+    mwld_run_time=0
     def to_object(self):
         out={}
         out["repeate_time"]=self.repeate_time
@@ -24,9 +26,12 @@ class RunCodeRecMain:
         out["file_Rec_Arr"]=tmp
         out["new_run_time"]=self.new_run_time
         out["lp_run_time"]=self.lp_run_time
+        out["mwld_run_time"]=self.mwld_run_time
+
         return out
 class FileRec:
-    #without extend name
+    """The class used to record the results of algorithms running a single graph"""
+    #with extend name
     origin_graph_file=""
     lp_graph_file=""
     lp_file=""
@@ -36,11 +41,21 @@ class FileRec:
     max_com_vertex=0
     id_number=0#when there exists file with same node_number and edge_number
     
+    #mark that if we hava completed the alg on thie graph
     new_alg_complete=False
     lp_alg_complete=False
+    mwld_alg_complete=False
 
+    #running time of these three algorithms
     new_alg_run_time=0
     lp_alg_run_time=0
+    mwld_alg_run_time=0
+
+    #result refers to the sum of the weight of pair of shortest path
+    #thie mainly used to compare if the result is the same for that compare two path is 
+    #a little bit inefficent
+    new_alg_result=0
+    mwld_alg_result=0
 
     def to_object(self):
         out={}
@@ -53,11 +68,16 @@ class FileRec:
         out["id_number"]=self.id_number
         out["new_alg_complete"]=self.new_alg_complete
         out["lp_alg_complete"]=self.lp_alg_complete
+        out["mwld_alg_complete"]=self.mwld_alg_complete
         out["new_alg_run_time"]=self.new_alg_run_time
         out["lp_alg_run_time"]=self.lp_alg_run_time
+        out["mwld_alg_run_time"]=self.mwld_alg_run_time
+        out["new_alg_result"]=self.new_alg_result
+        out["mwld_alg_result"]=self.mwld_alg_result
         return out
 
 def generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_point_num,des_point_num,repeate_time):
+    """generate random graphs in batch and restore them into json file"""
     os.chdir(graph_data_folder)
     con_file=open("data.json","w+")
     rec_main=RunCodeRecMain()
@@ -89,10 +109,12 @@ def generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_
     json.dump(rec_main.to_object(),con_file)
     con_file.close()
 
-def run_code_group(SCALE):
+def run_new_alg_group(SCALE=1):
+    """run new algorithm on graphs in the folder in batch"""
     os.chdir(graph_data_folder)
     con_file=open("data.json","r")
     rec_object=json.load(con_file)
+    con_file.close()
 
     repeate_time=20
     file_number=0
@@ -110,46 +132,89 @@ def run_code_group(SCALE):
     for rec_file in file_Rec_Arr:
         if rec_file["new_alg_complete"] is True:
             time_all+=rec_file["new_alg_run_time"]
-            continue
         else:
             origin_graph_file=rec_file["origin_graph_file"]
             max_com_vertex=rec_file["max_com_vertex"]
             time_sum=0
             graph_file=open(origin_graph_file,"r")
             graph=json_graph.node_link_graph(json.load(graph_file))
+            graph_file.close()
             start_point_num=graph.graph["S"]
             des_point_num=graph.graph["T"]
             for n in range(repeate_time):
                 time_start=time.time()
                 try:
-                    #path_P,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph)
-                    #dist,path_Q=am.RSP_with_recursion(residual_graph,start_point_num,des_point_num,max_com_vertex*SCALE)
-                    #print("the total weight is %f"%(dist+get_SP_weight(graph,path_P)))
-                    pass
+                    path_P,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph)
+                    dist,path_Q=am.RSP_with_recursion(residual_graph,start_point_num,des_point_num,max_com_vertex*SCALE)
+                    rec_file["new_alg_result"]=int(dist+get_SP_weight(graph,path_P))
                 except BaseException as e:
                     print(format(e))
-                weight_sum,path=am.mwld_alg(graph,start_point_num,des_point_num,max_com_vertex)
-                print(weight_sum)
-                print(path)
-                print("-----------")
-
                 time_end=time.time()
                 time_sum+=(time_end-time_start)
             time_sum=time_sum/repeate_time
             rec_file["new_alg_run_time"]=time_sum/SCALE
             rec_file["new_alg_complete"]=True
             time_all+=time_sum
-            graph_file.close()
 
             print("file %s complete"%(rec_file["origin_graph_file"]))
 
     time_all=time_all/file_number
     rec_object["new_run_time"]=time_all
-    con_file.close()
     con_file=open("data.json","w+")
     json.dump(rec_object,con_file)
     con_file.close()
 
+def run_mwld_group():
+    """run mwld algorithm on graphs in the folder in batch"""
+    os.chdir(graph_data_folder)
+    con_file=open("data.json","r")
+    rec_object=json.load(con_file)
+    con_file.close()
+
+    repeate_time=20
+    file_number=0
+    file_Rec_Arr=[]
+    mwld_run_time=0
+
+    repeate_time=rec_object["repeate_time"]
+    file_number=rec_object["file_number"]
+    file_Rec_Arr=rec_object["file_Rec_Arr"]
+    mwld_run_time=rec_object["mwld_run_time"]
+
+    time_all=0
+    for rec_file in file_Rec_Arr:
+        if rec_file["mwld_alg_complete"] is True:
+            time_all+=rec_file["mwld_alg_run_time"]
+        else:
+            origin_graph_file=rec_file["origin_graph_file"]
+            max_com_vertex=rec_file["max_com_vertex"]
+            time_sum=0
+            graph_file=open(origin_graph_file,"r")
+            graph=json_graph.node_link_graph(json.load(graph_file))
+            graph_file.close()
+            start_point_num=graph.graph["S"]
+            des_point_num=graph.graph["T"]
+            for n in range(repeate_time):
+                time_start=time.time()
+                try:
+                    weight_sum,path=am.mwld_alg(graph,start_point_num,des_point_num,max_com_vertex)
+                    rec_file["mwld_alg_result"]=weight_sum
+                except BaseException as e:
+                    print(format(e))
+                time_end=time.time()
+                time_sum+=(time_end-time_start)
+            time_sum=time_sum/repeate_time
+            rec_file["mwld_alg_run_time"]=time_sum
+            rec_file["mwld_alg_complete"]=True
+            time_all+=time_sum
+
+            print("file %s complete"%(rec_file["origin_graph_file"]))
+
+    time_all=time_all/file_number
+    rec_object["mwld_run_time"]=time_all
+    con_file=open("data.json","w+")
+    json.dump(rec_object,con_file)
+    con_file.close()
 
 def verify_RSP_result(graph,path,max_com_vertex):
     success=True
