@@ -6,8 +6,11 @@ import networkx as nx
 from networkx.readwrite import json_graph
 import numpy as np
 import json
+import csv
+import re
 # the following two classes is used to record the data of code's running
 graph_data_folder="D:\PythonProject\Essays\code\partial_disjoint_path\java_code\graph_data\\"
+sol_files_folder="D:\PythonProject\Essays\code\partial_disjoint_path\java_code\solFiles\\"
 class RunCodeRecMain:
     """the class used to record the main data of files in the folder"""
     repeate_time=20
@@ -55,6 +58,7 @@ class FileRec:
     #thie mainly used to compare if the result is the same for that compare two path is 
     #a little bit inefficent
     new_alg_result=0
+    lp_alg_result=0
     mwld_alg_result=0
 
     def to_object(self):
@@ -73,6 +77,7 @@ class FileRec:
         out["lp_alg_run_time"]=self.lp_alg_run_time
         out["mwld_alg_run_time"]=self.mwld_alg_run_time
         out["new_alg_result"]=self.new_alg_result
+        out["lp_alg_result"]=self.lp_alg_result
         out["mwld_alg_result"]=self.mwld_alg_result
         return out
 
@@ -231,10 +236,12 @@ def verify_RSP_result(graph,path,max_com_vertex):
     return success
 
 def get_SP_weight(graph,path):
+    """the path is a validate path in the graph, and this returns its sum of weight"""
     total=0
     for index in range(len(path)-1):
         total+=graph[path[index]][path[index+1]]["weight"]
     return total
+
 def save_graph_to_json(graph,graph_file_name):
     """convert graph to json format to store it"""
     file=open(graph_file_name,"w+")
@@ -242,3 +249,44 @@ def save_graph_to_json(graph,graph_file_name):
     json_data=json.dumps(graph_data)
     file.write(json_data)
     file.close()
+def collect_data_csv():
+    """collect the information of data.json and write them into a csv file for futuer analysis"""
+    os.chdir(graph_data_folder)
+    con_file=open("data.json","r")
+    rec_object=json.load(con_file)
+    con_file.close()
+    
+    csv_file_name="data.csv"
+    with open(csv_file_name,"w+",newline='') as csv_file:
+        csv_header=["id","new_alg_run_time","new_alg_result","mwld_alg_run_time","mwld_alg_result","lp_alg_run_time","lp_alg_result"]
+        writer = csv.DictWriter(csv_file, fieldnames=csv_header)
+        file_Rec_Arr=rec_object["file_Rec_Arr"]
+        data=[]
+        for file_rec in file_Rec_Arr:
+            rec={}
+            rec["id"]=file_rec["id_number"]
+            rec["new_alg_run_time"]=file_rec["new_alg_run_time"]
+            rec["new_alg_result"]=file_rec["new_alg_result"]
+            rec["mwld_alg_run_time"]=file_rec["mwld_alg_run_time"]
+            rec["mwld_alg_result"]=file_rec["mwld_alg_result"]
+            rec["lp_alg_run_time"]=file_rec["lp_alg_run_time"]
+
+            sol_file_name=file_rec["lp_file"].split(".")[0]+".sol"
+            rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
+            data.append(rec)
+        writer.writeheader()
+        writer.writerows(data)
+
+def get_result_from_sol(sol_file_name):
+    """the result of ILP algorithm will be in file like xxxx.sol and this function extract result from it """
+    sol_file=open(sol_files_folder+sol_file_name,"r")
+    line_num=1
+    for line in sol_file:
+        if line_num==6:
+            line=line.strip()
+            result=re.sub("\D", "", line)
+            result=int(result)
+            break
+        else:
+            line_num+=1
+    return result
