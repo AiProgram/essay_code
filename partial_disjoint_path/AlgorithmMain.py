@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 import utilities as util
-INFINITY=sys.maxsize/2
+INFINITY=sys.maxsize/10
 def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,SCALE=50):
     #find original shortest path
     node_num=0
@@ -36,7 +36,7 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
 
     # For each edge e ∈G' Set c(e) := 0
     for s,t in residual_graph.edges():
-        residual_graph.add_edge(s,t,cost=1)
+        residual_graph.add_edge(s,t,cost=0)
 
     
     #For each interior vertex v ∈ P∗ \ {s, t} add v1,v2 with its weight and cost 
@@ -45,7 +45,7 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
             p1=p+node_num
             p2=p+2*node_num
             residual_graph.add_edge(p1,p2,weight=0,cost=SCALE)
-            residual_graph.add_edge(p2,p1,weight=0,cost=1)
+            residual_graph.add_edge(p2,p1,weight=0,cost=0)
     
     #
     for u,v in graph.edges():
@@ -58,20 +58,20 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
                 u2=u+2*node_num
             if v is not start_point_num and v is not des_point_num:
                 v1=v+node_num
-            residual_graph.add_edge(v1,u2,weight=-w,cost=1)
+            residual_graph.add_edge(v1,u2,weight=-w,cost=0)
         else:
             #u ∈ P∗ \ {s, t}
             if shortest_path.count(u)>0 and u!=start_point_num and u!=des_point_num:
                 u2=u+2*node_num
                 if shortest_path.count(v)>0 and v!=start_point_num and v!=des_point_num:
                     v+=node_num
-                residual_graph.add_edge(u2,v,weight=w,cost=1)
+                residual_graph.add_edge(u2,v,weight=w,cost=0)
             #v ∈ P∗ \ {s, t}
             if shortest_path.count(v)>0 and v!=start_point_num and v!=des_point_num:
                 v1=v+node_num
                 if shortest_path.count(u)>0 and u!=start_point_num and u!=des_point_num:
                     u+=2*node_num
-                residual_graph.add_edge(u,v1,weight=w,cost=1)
+                residual_graph.add_edge(u,v1,weight=w,cost=0)
 
     if debug is True:
         plt.figure( figsize=(10,10),dpi=80)
@@ -85,17 +85,11 @@ def constrained_shortest_path(start_point_num,des_point_num,graph=None,max_com_v
     if graph==None:
         return
     dyn_mat=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1))
-    for i in range(graph.number_of_nodes()):
-        if i is start_point_num:
-            continue
-        else:
-            for j in range(max_com_vertex+1):
-                dyn_mat[i][j]=INFINITY
     #con_shortest_path_small(start_point_num,des_point_num,graph,max_com_vertex,path)
-    path=RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,debug)
+    dist,path=RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,debug)
     if debug is True:
-        print("shortest distance: %d"%(dyn_mat[des_point_num][max_com_vertex]))
-    return path
+        print("shortest distance: %d"%(int(dist)))
+    return dist,path
 
 # function abandoned
 def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,debug=False):
@@ -103,27 +97,29 @@ def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,
     path_map=np.zeros((graph.number_of_nodes()*3,max_com_vertex+1),dtype=int)
     min_node=0
 
+    #initiallization 
+    for node in graph.nodes():
+        if node !=start_point_num:
+            for mcv in range(max_com_vertex+1):
+                dyn_mat[node][mcv]=INFINITY
     for mcv in range(max_com_vertex+1):
         dyn_mat[start_point_num][mcv]=0
-    
-    for node in range(graph.number_of_nodes()*3):
-        if node != start_point_num:
-            dyn_mat[node][0]=INFINITY
-
+        
+    #main algorithm    
     for mcv in range(1,max_com_vertex+1):
         for node in graph.nodes():
-            if node != start_point_num:
-                min_node=node
-                min_dist=dyn_mat[node][mcv-1]
-                for pred in graph.predecessors(node):
-                    if graph[pred][node]["cost"]<=mcv:
-                        new_mcv=mcv-graph[pred][node]["cost"]
-                        new_dist=dyn_mat[pred][new_mcv]+graph[pred][node]["weight"]
-                        if new_dist< min_dist:
-                            min_dist=new_dist
-                            min_node=pred
-                path_map[node][mcv]=min_node
-        
+            dyn_mat[node][mcv]=dyn_mat[node][mcv-1]
+            path_map[node][mcv]=node
+        for u,v in graph.edges():
+            if graph[u][v]["cost"]==0:
+                if dyn_mat[v][mcv]>=dyn_mat[u][mcv]+graph[u][v]["weight"]:
+                    dyn_mat[v][mcv]=dyn_mat[u][mcv]+graph[u][v]["weight"]
+                    path_map[v][mcv]=u
+            elif graph[u][v]["cost"]==1:
+                if dyn_mat[v][mcv]>=dyn_mat[u][mcv-1]+graph[u][v]["weight"]:
+                    dyn_mat[v][mcv]=dyn_mat[u][mcv-1]+graph[u][v]["weight"]
+                    path_map[v][mcv]=u 
+
     if debug==True:
         file=open("debug.txt","w+")
         i=0
@@ -133,6 +129,9 @@ def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,
         file.write(str(dyn_mat[des_point_num][max_com_vertex]))
         file.close()
 
+    tmp=[]
+    return float(dyn_mat[des_point_num][max_com_vertex]),tmp
+"""block comment
     cur_node=des_point_num
     cur_mcv=max_com_vertex
     next_mcv=cur_mcv
@@ -146,12 +145,10 @@ def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,
         cur_node=next_node
         cur_mcv=next_mcv
     path=path[::-1]
-    tmp=[]
     for node in path:
         if node not in tmp:
             tmp.append(node) 
-
-    return tmp,float(dyn_mat[des_point_num][max_com_vertex])
+"""
 
 # recommand function
 def RSP_with_recursion(graph,start_point_num,des_point_num,max_com_vertex):
@@ -317,7 +314,8 @@ def get_graph_for_LP(graph,start_point_num,des_point_num,max_com_vertex):
 def mwld_alg(graph,start_point_num,des_point_num,max_com_vertex):
     """the main function of mwld algorithm"""
     aux_graph=mwld_get_aux_graph(graph)
-    w,path=RSP_with_recursion(aux_graph,start_point_num,des_point_num,max_com_vertex)
+    #max common vertex is n means tha max common edge in aux_graph is n-1
+    w,path=constrained_shortest_path(start_point_num,des_point_num,aux_graph,max_com_vertex-1)
     return w,path
 
 def get_SP_reverse_graph(graph,shortest_path):

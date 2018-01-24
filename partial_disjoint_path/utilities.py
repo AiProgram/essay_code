@@ -61,6 +61,8 @@ class FileRec:
     lp_alg_result=0
     mwld_alg_result=0
 
+    best_mcv=1
+
     def to_object(self):
         out={}
         out["origin_graph_file"]=self.origin_graph_file
@@ -79,6 +81,7 @@ class FileRec:
         out["new_alg_result"]=self.new_alg_result
         out["lp_alg_result"]=self.lp_alg_result
         out["mwld_alg_result"]=self.mwld_alg_result
+        out["best_mcv"]=self.best_mcv
         return out
 
 def generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_point_num,des_point_num,repeate_time):
@@ -150,14 +153,15 @@ def run_new_alg_group(SCALE=1):
                 time_start=time.time()
                 try:
                     path_P,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph)
-                    dist,path_Q=am.RSP_with_recursion(residual_graph,start_point_num,des_point_num,max_com_vertex*SCALE)
-                    rec_file["new_alg_result"]=int(dist+get_SP_weight(graph,path_P))
+                    #dist,path_Q=am.RSP_with_recursion(residual_graph,start_point_num,des_point_num,max_com_vertex*SCALE)
+                    dist,pathQ=am.constrained_shortest_path(start_point_num,des_point_num,residual_graph,max_com_vertex)
+                    rec_file["new_alg_result"]=dist+get_SP_weight(graph,path_P)
                 except BaseException as e:
                     print(format(e))
                 time_end=time.time()
                 time_sum+=(time_end-time_start)
             time_sum=time_sum/repeate_time
-            rec_file["new_alg_run_time"]=time_sum/SCALE
+            rec_file["new_alg_run_time"]=time_sum
             rec_file["new_alg_complete"]=True
             time_all+=time_sum
 
@@ -168,6 +172,45 @@ def run_new_alg_group(SCALE=1):
     con_file=open("data.json","w+")
     json.dump(rec_object,con_file)
     con_file.close()
+
+def get_best_mcv_group(max_mcv=20):
+    os.chdir(graph_data_folder)
+    con_file=open("data.json","r")
+    rec_object=json.load(con_file)
+    con_file.close()
+
+    file_number=0
+    file_Rec_Arr=[]
+    new_run_time=0
+
+    file_number=rec_object["file_number"]
+    file_Rec_Arr=rec_object["file_Rec_Arr"]
+    new_run_time=rec_object["new_run_time"]
+
+    for rec_file in file_Rec_Arr:
+        origin_graph_file=rec_file["origin_graph_file"]
+        graph_file=open(origin_graph_file,"r")
+        graph=json_graph.node_link_graph(json.load(graph_file))
+        graph_file.close()
+        start_point_num=graph.graph["S"]
+        des_point_num=graph.graph["T"]
+        lp_alg_result=rec_file["lp_alg_result"]
+        try:
+            old_result=-10
+            path_P,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph)
+            for i in range(1,max_mcv+1):
+                dist,pathQ=am.constrained_shortest_path(start_point_num,des_point_num,residual_graph,i)
+                cur_result=dist+get_SP_weight(graph,path_P)
+                if cur_result==lp_alg_result:
+                    rec_file["best_mcv"]=i
+                    break           
+        except BaseException as e:
+            print(format(e))
+        print("file %s complete"%(rec_file["origin_graph_file"]))
+    con_file=open("data.json","w+")
+    json.dump(rec_object,con_file)
+    con_file.close()
+    pass
 
 def run_mwld_group():
     """run mwld algorithm on graphs in the folder in batch"""
@@ -273,9 +316,13 @@ def collect_data_csv():
 
             sol_file_name=file_rec["lp_file"].split(".")[0]+".sol"
             rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
+            file_rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
             data.append(rec)
         writer.writeheader()
         writer.writerows(data)
+    con_file=open("data.json","w+")
+    json.dump(rec_object,con_file)
+    con_file.close()
 
 def get_result_from_sol(sol_file_name):
     """the result of ILP algorithm will be in file like xxxx.sol and this function extract result from it """
@@ -290,3 +337,4 @@ def get_result_from_sol(sol_file_name):
         else:
             line_num+=1
     return result
+
