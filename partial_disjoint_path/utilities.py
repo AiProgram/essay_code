@@ -8,9 +8,10 @@ import numpy as np
 import json
 import csv
 import re
+#these folder paths is relative to our folder that stores this python file
+graph_data_folder="\\java_code\\graph_data\\"
+sol_files_folder="\\java_code\\solFiles\\"#folder to store the result file (which name is like xxx.sol) of glpk
 # the following two classes is used to record the data of code's running
-graph_data_folder="D:\PythonProject\Essays\code\partial_disjoint_path\java_code\graph_data\\"
-sol_files_folder="D:\PythonProject\Essays\code\partial_disjoint_path\java_code\solFiles\\"
 class RunCodeRecMain:
     """the class used to record the main data of files in the folder"""
     repeate_time=20
@@ -86,7 +87,7 @@ class FileRec:
 
 def generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_point_num,des_point_num,repeate_time):
     """generate random graphs in batch and restore them into json file"""
-    os.chdir(graph_data_folder)
+    os.chdir(os.path.dirname(__file__)+graph_data_folder)
     con_file=open("data.json","w+")
     rec_main=RunCodeRecMain()
     rec_main.file_number=0
@@ -119,7 +120,7 @@ def generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_
 
 def run_new_alg_group(SCALE=1):
     """run new algorithm on graphs in the folder in batch"""
-    os.chdir(graph_data_folder)
+    os.chdir(os.path.dirname(__file__)+graph_data_folder)
     con_file=open("data.json","r")
     rec_object=json.load(con_file)
     con_file.close()
@@ -173,48 +174,10 @@ def run_new_alg_group(SCALE=1):
     json.dump(rec_object,con_file)
     con_file.close()
 
-def get_best_mcv_group(max_mcv=20):
-    os.chdir(graph_data_folder)
-    con_file=open("data.json","r")
-    rec_object=json.load(con_file)
-    con_file.close()
-
-    file_number=0
-    file_Rec_Arr=[]
-    new_run_time=0
-
-    file_number=rec_object["file_number"]
-    file_Rec_Arr=rec_object["file_Rec_Arr"]
-    new_run_time=rec_object["new_run_time"]
-
-    for rec_file in file_Rec_Arr:
-        origin_graph_file=rec_file["origin_graph_file"]
-        graph_file=open(origin_graph_file,"r")
-        graph=json_graph.node_link_graph(json.load(graph_file))
-        graph_file.close()
-        start_point_num=graph.graph["S"]
-        des_point_num=graph.graph["T"]
-        lp_alg_result=rec_file["lp_alg_result"]
-        try:
-            old_result=-10
-            path_P,residual_graph=am.get_residual_graph(start_point_num,des_point_num,graph=graph)
-            for i in range(1,max_mcv+1):
-                dist,pathQ=am.constrained_shortest_path(start_point_num,des_point_num,residual_graph,i)
-                cur_result=dist+get_SP_weight(graph,path_P)
-                if cur_result==lp_alg_result:
-                    rec_file["best_mcv"]=i
-                    break           
-        except BaseException as e:
-            print(format(e))
-        print("file %s complete"%(rec_file["origin_graph_file"]))
-    con_file=open("data.json","w+")
-    json.dump(rec_object,con_file)
-    con_file.close()
-    pass
 
 def run_mwld_group():
     """run mwld algorithm on graphs in the folder in batch"""
-    os.chdir(graph_data_folder)
+    os.chdir(os.path.dirname(__file__)+graph_data_folder)
     con_file=open("data.json","r")
     rec_object=json.load(con_file)
     con_file.close()
@@ -294,14 +257,14 @@ def save_graph_to_json(graph,graph_file_name):
     file.close()
 def collect_data_csv():
     """collect the information of data.json and write them into a csv file for futuer analysis"""
-    os.chdir(graph_data_folder)
+    os.chdir(os.path.dirname(__file__)+graph_data_folder)
     con_file=open("data.json","r")
     rec_object=json.load(con_file)
     con_file.close()
     
     csv_file_name="data.csv"
     with open(csv_file_name,"w+",newline='') as csv_file:
-        csv_header=["id","new_alg_run_time","new_alg_result","mwld_alg_run_time","mwld_alg_result","lp_alg_run_time","lp_alg_result"]
+        csv_header=["id","new_alg_run_time","new_alg_result","mwld_alg_run_time","mwld_alg_result","lp_alg_run_time","lp_alg_result","best_mcv"]
         writer = csv.DictWriter(csv_file, fieldnames=csv_header)
         file_Rec_Arr=rec_object["file_Rec_Arr"]
         data=[]
@@ -313,8 +276,10 @@ def collect_data_csv():
             rec["mwld_alg_run_time"]=file_rec["mwld_alg_run_time"]
             rec["mwld_alg_result"]=file_rec["mwld_alg_result"]
             rec["lp_alg_run_time"]=file_rec["lp_alg_run_time"]
+            rec["best_mcv"]=file_rec["best_mcv"]
 
             sol_file_name=file_rec["lp_file"].split(".")[0]+".sol"
+            #rec["lp_alg_result"]=0
             rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
             file_rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
             data.append(rec)
@@ -326,15 +291,19 @@ def collect_data_csv():
 
 def get_result_from_sol(sol_file_name):
     """the result of ILP algorithm will be in file like xxxx.sol and this function extract result from it """
-    sol_file=open(sol_files_folder+sol_file_name,"r")
-    line_num=1
-    for line in sol_file:
-        if line_num==6:
-            line=line.strip()
-            result=re.sub("\D", "", line)
-            result=int(result)
-            break
-        else:
-            line_num+=1
+    full_path=os.path.dirname(__file__)+sol_files_folder+sol_file_name
+    if os.path.exists(full_path):#in case we use this function when we have not run the lp algorithm
+        sol_file=open(os.path.dirname(__file__)+sol_files_folder+sol_file_name,"r")
+        line_num=1
+        for line in sol_file:
+            if line_num==6:
+                line=line.strip()
+                result=re.sub("\D", "", line)
+                result=int(result)
+                break
+            else:
+                line_num+=1
+    else:
+        return 0
     return result
 

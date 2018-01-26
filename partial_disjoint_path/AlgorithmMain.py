@@ -6,7 +6,7 @@ import copy
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
-import utilities as util
+import Utilities as util
 INFINITY=sys.maxsize/10
 def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,SCALE=50):
     #find original shortest path
@@ -21,7 +21,6 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
     try:
         shortest_path=nx.shortest_path(graph,start_point_num,des_point_num,"weight")
     except :
-        print(" the source point is unreachable ")
         return 
     if debug is True:
         print("original shortest path:\t"+str(shortest_path))
