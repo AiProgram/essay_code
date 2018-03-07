@@ -3,3 +3,9 @@ partial_disjoint_path/java_code/lpFiles
 partial_disjoint_path/java_code/solFiles
 partial_disjoint_path/java_code/result
 partial_disjoint_path/java_code/out
+internship_fzu/.idea
+internship_fzu/out
+*.json
+*.log
+*.class
+glpk-4.64
