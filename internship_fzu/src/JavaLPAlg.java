@@ -1,40 +1,18 @@
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.gnu.glpk.*;
+import org.jgrapht.graph.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jgrapht.*;
 
 public class JavaLPAlg {
-    public class Edge
-    {
-        Edge()
-        {
 
-        }
-        Edge(int source,int target,int weight,int cost)
-        {
-            this.source=source;
-            this.target=target;
-            this.weight=weight;
-            this.cost=cost;
-        }
-        public int source;
-        public int target;
-        public int weight;
-        public int cost;
-    }
-    public class Graph
-    {
-        int nodeNumber;
-        int edgeNumber;
-        int nodes[];
-        int start_point;
-        int dest_point;
-        int bound;
-        List<Edge> edges;
-    }
+    public int start_point;
+    public int dest_point;
+    public int bound;
+    Map<DefaultWeightedEdge,Integer> costMap=new HashMap<>();
 
     private String readJsonGraph(String fileName)
     {
@@ -79,28 +57,26 @@ public class JavaLPAlg {
         JSONArray  edgesArr=new JSONArray();
         edgesArr=jsonObject.getJSONArray("links");
 
-
-        Graph graph=new Graph();
-        graph.nodeNumber=nodesArr.length();
+        WeightedMultigraph<Integer,DefaultWeightedEdge> graph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
+        int nodeNumber=nodesArr.length();
         JSONObject graphObject=jsonObject.getJSONObject("graph");
-        graph.start_point=graphObject.getInt("S");
-        graph.dest_point=graphObject.getInt("T");
-        graph.bound=graphObject.getInt("bound");
+        start_point=graphObject.getInt("S");
+        dest_point=graphObject.getInt("T");
+        bound=graphObject.getInt("bound");
 
 
 
         //deal with the nodes
-        graph.nodes=new int[graph.nodeNumber];
-        for(int i=0;i<graph.nodeNumber;i++)
+        for(int i=0;i<nodeNumber;i++)
         {
             JSONObject tmpObject=nodesArr.getJSONObject(i);
             id=tmpObject.getInt("id");
-            graph.nodes[i]=id;
+            graph.addVertex(id);
         }
 
 
         //deal with the edges
-        graph.edges=new ArrayList<>();
+        EdgeFactory<Integer,DefaultWeightedEdge> edgeEdgeFactory=graph.getEdgeFactory();
         for(int i=0;i<edgesArr.length();i++)
         {
             JSONObject tmpObject=edgesArr.getJSONObject(i);
@@ -110,15 +86,23 @@ public class JavaLPAlg {
             cost=tmpObject.getInt("cost");
             realSrc=source;
             realTar=target;
-            graph.edges.add(new Edge(realSrc,realTar,weight,cost));
+
+            DefaultWeightedEdge edge=edgeEdgeFactory.createEdge(realSrc,realTar);
+            costMap.put(edge,cost);
+            graph.setEdgeWeight(edge,weight);
+            graph.addEdge(realSrc,realTar,edge);
+
+            //graph.edges.add(new Edge(realSrc,realTar,weight,cost));
             //The graph with duplicates are too complex, so we add the second duplicator here
             if(cost==1)
             {
-                graph.edges.add(new Edge(realSrc,realTar,0,0));
+                edge=edgeEdgeFactory.createEdge(realSrc,realTar);
+                costMap.put(edge,0);
+                graph.setEdgeWeight(edge,0);
+                graph.addEdge(realSrc,realTar,edge);
             }
         }
 
-        graph.edgeNumber=graph.edges.size();
         return graph;
     }
 
@@ -128,6 +112,10 @@ public class JavaLPAlg {
         SWIGTYPE_p_int index;
         SWIGTYPE_p_double val;
         int ret;
+        int edgeNumber=graph.edgeSet().size();
+        int nodeNumber=graph.vertexSet().size();
+
+        System.out.println(edgeNumber+"  "+nodeNumber);
 
         try{
 
@@ -137,8 +125,8 @@ public class JavaLPAlg {
             GLPK.glp_set_prob_name(lp, "myProblem");
 
             //定义变量
-            GLPK.glp_add_cols(lp, graph.edgeNumber);
-            for(int i=1;i<=graph.edgeNumber;i++)
+            GLPK.glp_add_cols(lp, edgeNumber);
+            for(int i=1;i<=edgeNumber;i++)
             {
                 GLPK.glp_set_col_kind(lp,i,GLPKConstants.GLP_BV);
             }
@@ -146,29 +134,33 @@ public class JavaLPAlg {
             //设置约束
 
             //申请内存
-            index=GLPK.new_intArray(graph.edgeNumber);
-            val=GLPK.new_doubleArray(graph.edgeNumber);
+            index=GLPK.new_intArray(edgeNumber);
+            val=GLPK.new_doubleArray(edgeNumber);
 
             //预先设置约束的条数
-            GLPK.glp_add_rows(lp, graph.nodeNumber);
+            GLPK.glp_add_rows(lp,nodeNumber);
 
             //具体设置约束
-            for(int i=1,j=1;i<=graph.nodeNumber;i++)
+            Iterator vit=graph.vertexSet().iterator();
+            for(int i=1,j=1;i<=nodeNumber;i++)
             {
                 int a;
                 int b;
 
                 GLPK.glp_set_row_name(lp,j,"c"+i);
 
-                int node=graph.nodes[i-1];
-                if(node==graph.dest_point) continue;
-                for(int k=1;k<=graph.edgeNumber;k++)
+                //int node=graph.nodes[i-1];
+                int node=(int)vit.next();
+                if(node==dest_point) continue;
+                Iterator eit=graph.edgeSet().iterator();
+                for(int k=1;k<=edgeNumber;k++)
                 {
-                    Edge edge=graph.edges.get(k-1);
-                    if(edge.source==node)
+                    //MyEdge edge=graph.edge.get(k-1);
+                    DefaultWeightedEdge edge=(DefaultWeightedEdge) eit.next();
+                    if((int)graph.getEdgeSource(edge)==node)
                     {
                         a=1;
-                    }else if(edge.target==node) {
+                    }else if((int)graph.getEdgeTarget(edge)==node) {
                         a=-1;
                     }else{
                         a=0;
@@ -176,7 +168,7 @@ public class JavaLPAlg {
                     GLPK.intArray_setitem(index,k,k);
                     GLPK.doubleArray_setitem(val,k,a);
                 }
-                if(node==graph.start_point)
+                if(node==start_point)
                 {
                     b=2;
                 }else{
@@ -184,19 +176,21 @@ public class JavaLPAlg {
                 }
                 GLPK.glp_set_row_bnds(lp,i,GLPKConstants.GLP_FX,b,b);
 
-                GLPK.glp_set_mat_row(lp, j, graph.edgeNumber, index, val);
+                GLPK.glp_set_mat_row(lp, j, edgeNumber, index, val);
                 j++;
             }
 
-            GLPK.glp_set_row_name(lp,graph.nodeNumber,"c"+0);
-            GLPK.glp_set_row_bnds(lp,graph.nodeNumber,GLPKConstants.GLP_UP,0,graph.bound);
-            for(int k=1;k<=graph.edgeNumber;k++)
+            GLPK.glp_set_row_name(lp,nodeNumber,"c"+0);
+            GLPK.glp_set_row_bnds(lp,nodeNumber,GLPKConstants.GLP_UP,0,bound);
+            Iterator eit=graph.edgeSet().iterator();
+            for(int k=1;k<=edgeNumber;k++)
             {
                 GLPK.intArray_setitem(index,k,k);
-                Edge edge=graph.edges.get(k-1);
-                GLPK.doubleArray_setitem(val,k,edge.cost);
+                //Edge edge=graph.edges.get(k-1);
+                DefaultWeightedEdge edge=(DefaultWeightedEdge) eit.next();
+                GLPK.doubleArray_setitem(val,k,costMap.get(edge));
             }
-            GLPK.glp_set_mat_row(lp,graph.nodeNumber,graph.edgeNumber,index,val);
+            GLPK.glp_set_mat_row(lp,nodeNumber,edgeNumber,index,val);
 
             //释放内存
             GLPK.delete_intArray(index);
@@ -205,11 +199,12 @@ public class JavaLPAlg {
             //设置最值式
             GLPK.glp_set_obj_name(lp, "result");
             GLPK.glp_set_obj_dir(lp, GLPKConstants.GLP_MIN);
-
-            for(int i=0;i<graph.edgeNumber;i++)
+            eit=graph.edgeSet().iterator();
+            for(int i=0;i<edgeNumber;i++)
             {
-                Edge edge=graph.edges.get(i);
-                GLPK.glp_set_obj_coef(lp, i, edge.weight);
+                //Edge edge=graph.edges.get(i);
+                DefaultWeightedEdge edge=(DefaultWeightedEdge) eit.next();
+                GLPK.glp_set_obj_coef(lp, i, graph.getEdgeWeight(edge));
             }
 
             //解决模型
