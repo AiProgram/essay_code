@@ -1,3 +1,5 @@
+package Alg;
+
 import java.io.*;
 import java.util.*;
 
@@ -129,6 +131,7 @@ public class JavaLPAlg {
             for(int i=1;i<=edgeNumber;i++)
             {
                 GLPK.glp_set_col_kind(lp,i,GLPKConstants.GLP_BV);
+                GLPK.glp_set_col_name(lp,i,"x"+i);
             }
 
             //设置约束
