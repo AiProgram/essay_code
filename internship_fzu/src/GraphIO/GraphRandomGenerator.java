@@ -33,7 +33,9 @@ public class GraphRandomGenerator {
 
         MyGraph myGraph=new MyGraph();
         myGraph.graph=graph;
-        myGraph.costMap=new HashMap<>();
+        myGraph.costMap=this.costMap;
+        myGraph.nodeNum=nodeNum;
+        myGraph.edgeNum=edgeNum;
         return myGraph;
     }
 
@@ -47,13 +49,4 @@ public class GraphRandomGenerator {
         }
     }
 
-    public static void main(String args[]){
-        GraphRandomGenerator randomGenerator=new GraphRandomGenerator();
-        MyGraph myGraph=randomGenerator.generateRandomGraph(20,100);
-        WeightedMultigraph graph=myGraph.graph;
-        BellmanFordShortestPath<Integer,DefaultWeightedEdge> bellmanFordShortestPath=new BellmanFordShortestPath(graph);
-        Random random=new Random();
-        double weight=bellmanFordShortestPath.getPathWeight(2,10);
-        System.out.println(weight);
-    }
 }

@@ -14,4 +14,9 @@ import java.util.Map;
 public class MyGraph {
     public WeightedMultigraph graph;//JGraphT所能提供的graph格式
     public Map<DefaultWeightedEdge,Integer> costMap;
+    public int nodeNum;
+    public int edgeNum;
+    public int startPoint;
+    public int sinkPoint;
+    public int maxComVertex;
 }

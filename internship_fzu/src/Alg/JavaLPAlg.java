@@ -3,6 +3,7 @@ package Alg;
 import java.io.*;
 import java.util.*;
 
+import GraphIO.GraphRandomGenerator;
 import MyGraph.MyGraph;
 import org.gnu.glpk.*;
 import org.jgrapht.graph.*;
@@ -12,8 +13,8 @@ import org.jgrapht.*;
 
 public class JavaLPAlg {
 
-    public int start_point;
-    public int dest_point;
+    public int startPoint;
+    public int sinkPoint;
     public int bound;
     Map<DefaultWeightedEdge,Integer> costMap=new HashMap<>();
 
@@ -63,8 +64,8 @@ public class JavaLPAlg {
         WeightedMultigraph<Integer,DefaultWeightedEdge> graph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
         int nodeNumber=nodesArr.length();
         JSONObject graphObject=jsonObject.getJSONObject("graph");
-        start_point=graphObject.getInt("S");
-        dest_point=graphObject.getInt("T");
+        startPoint =graphObject.getInt("S");
+        sinkPoint =graphObject.getInt("T");
         bound=graphObject.getInt("bound");
 
 
@@ -109,14 +110,19 @@ public class JavaLPAlg {
         return graph;
     }
 
-    private void solveWithGLPK(Graph graph){
+    private void solveWithGLPK(MyGraph myGraph){
         glp_prob lp;
         glp_smcp parm;
         SWIGTYPE_p_int index;
         SWIGTYPE_p_double val;
+        WeightedMultigraph<Integer,DefaultWeightedEdge> graph=myGraph.graph;
+        costMap=myGraph.costMap;
         int ret;
-        int edgeNumber=graph.edgeSet().size();
-        int nodeNumber=graph.vertexSet().size();
+        int edgeNumber=myGraph.edgeNum;
+        int nodeNumber=myGraph.nodeNum;
+        startPoint=myGraph.startPoint;
+        sinkPoint=myGraph.sinkPoint;
+        bound=myGraph.maxComVertex;
 
         System.out.println(edgeNumber+"  "+nodeNumber);
 
@@ -155,7 +161,7 @@ public class JavaLPAlg {
 
                 //int node=graph.nodes[i-1];
                 int node=(int)vit.next();
-                if(node==dest_point) continue;
+                if(node== sinkPoint) continue;
                 Iterator eit=graph.edgeSet().iterator();
                 for(int k=1;k<=edgeNumber;k++)
                 {
@@ -172,7 +178,7 @@ public class JavaLPAlg {
                     GLPK.intArray_setitem(index,k,k);
                     GLPK.doubleArray_setitem(val,k,a);
                 }
-                if(node==start_point)
+                if(node== startPoint)
                 {
                     b=2;
                 }else{
@@ -239,11 +245,15 @@ public class JavaLPAlg {
      * @param myGraph G
      * @param startPoint 起始点
      * @param sinkPoint  终止点
-     * @param max_com_vertex 最大的共同点数量
+     * @param maxComVertex 最大的共同点数量
      * @return G'
      */
-    public MyGraph getGraphForILP(MyGraph myGraph, int startPoint, int sinkPoint, int max_com_vertex)
+    public MyGraph getGraphForILP(MyGraph myGraph, int startPoint, int sinkPoint, int maxComVertex)
     {
+        this.startPoint =startPoint;
+        this.sinkPoint =sinkPoint;
+        this.bound=maxComVertex;
+
         WeightedMultigraph<Integer,DefaultWeightedEdge> graph=myGraph.graph;
         WeightedMultigraph<Integer,DefaultWeightedEdge> lpGraph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
         lpGraph.addVertex(startPoint);
@@ -295,6 +305,9 @@ public class JavaLPAlg {
         }
 
         myGraph.graph=lpGraph;
+        myGraph.startPoint=startPoint;
+        myGraph.sinkPoint=sinkPoint;
+        myGraph.maxComVertex=maxComVertex;
         return myGraph;
     }
 
@@ -319,9 +332,11 @@ public class JavaLPAlg {
         }
     }
     public void  test(){
-        String graphData=readJsonGraph("lp_500_25000_10_2.json");
-        Graph graph=parseJsonToGraph(graphData);
-        solveWithGLPK(graph);
+        //String graphData=readJsonGraph("lp_500_25000_10_2.json");
+        GraphRandomGenerator generator=new GraphRandomGenerator();
+        MyGraph myGraph=generator.generateRandomGraph(200,5000);
+        myGraph=getGraphForILP(myGraph,0,20,4);
+        solveWithGLPK(myGraph);
     }
 
     public static  void main(String args[]){
