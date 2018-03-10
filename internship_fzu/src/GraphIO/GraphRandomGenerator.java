@@ -1,5 +1,6 @@
 package GraphIO;
 
+import MyGraph.MyGraph;
 import org.jgrapht.Graph;
 import org.jgrapht.VertexFactory;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
@@ -16,7 +17,7 @@ public class GraphRandomGenerator {
     public WeightedMultigraph<Integer,DefaultWeightedEdge> graph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
     public Map<DefaultWeightedEdge,Integer> costMap=new HashMap<>();
 
-    public WeightedMultigraph generateRandomGraph(int nodeNum,int edgeNum)
+    public MyGraph generateRandomGraph(int nodeNum, int edgeNum)
     {
         GnmRandomGraphGenerator<Integer,DefaultWeightedEdge> randomGraphGenerator=new GnmRandomGraphGenerator(nodeNum,edgeNum);
         randomGraphGenerator.generateGraph(graph,new MyVertextFactory(),null);
@@ -30,7 +31,10 @@ public class GraphRandomGenerator {
             costMap.put(edge,0);
         }
 
-        return graph;
+        MyGraph myGraph=new MyGraph();
+        myGraph.graph=graph;
+        myGraph.costMap=new HashMap<>();
+        return myGraph;
     }
 
     public class MyVertextFactory implements VertexFactory{
@@ -45,7 +49,8 @@ public class GraphRandomGenerator {
 
     public static void main(String args[]){
         GraphRandomGenerator randomGenerator=new GraphRandomGenerator();
-        WeightedMultigraph graph=randomGenerator.generateRandomGraph(20,100);
+        MyGraph myGraph=randomGenerator.generateRandomGraph(20,100);
+        WeightedMultigraph graph=myGraph.graph;
         BellmanFordShortestPath<Integer,DefaultWeightedEdge> bellmanFordShortestPath=new BellmanFordShortestPath(graph);
         Random random=new Random();
         double weight=bellmanFordShortestPath.getPathWeight(2,10);

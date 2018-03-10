@@ -3,6 +3,7 @@ package Alg;
 import java.io.*;
 import java.util.*;
 
+import MyGraph.MyGraph;
 import org.gnu.glpk.*;
 import org.jgrapht.graph.*;
 import org.json.JSONArray;
@@ -230,6 +231,71 @@ public class JavaLPAlg {
             ret=1;
         }
 
+    }
+
+    /**
+     *
+     * 为ILP算法提供G‘，G'是从原始图G变换过来的
+     * @param myGraph G
+     * @param startPoint 起始点
+     * @param sinkPoint  终止点
+     * @param max_com_vertex 最大的共同点数量
+     * @return G'
+     */
+    public MyGraph getGraphForILP(MyGraph myGraph, int startPoint, int sinkPoint, int max_com_vertex)
+    {
+        WeightedMultigraph<Integer,DefaultWeightedEdge> graph=myGraph.graph;
+        WeightedMultigraph<Integer,DefaultWeightedEdge> lpGraph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
+        lpGraph.addVertex(startPoint);
+        lpGraph.addVertex(sinkPoint);
+        //我们认为点的id应该在0和nodeNum-1之间
+        int nodeNum=graph.vertexSet().size();
+        Iterator vit=graph.vertexSet().iterator();
+        while(vit.hasNext()){
+            int node=(Integer)vit.next();
+            if(node==startPoint||node==sinkPoint) continue;
+            else{
+                lpGraph.addVertex(node);
+                lpGraph.addVertex(node+nodeNum);
+            }
+        }
+
+        //在G中进入v的边现在G’中进入v1，而离开v的边现在G‘中离开v2
+        Iterator eit=graph.edgeSet().iterator();
+        while(eit.hasNext()){
+            DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
+            double w=graph.getEdgeWeight(edge);
+            int u=graph.getEdgeSource(edge);
+            int v=graph.getEdgeTarget(edge);
+            int v1=0;
+            int u2=0;
+
+            if(v==startPoint||v==sinkPoint) v1=v;
+            else v1=v;
+            if(u==startPoint||u==sinkPoint) u2=u;
+            else u2=u+nodeNum;
+
+            DefaultWeightedEdge newEdge=lpGraph.getEdgeFactory().createEdge(u2,v1);
+            lpGraph.addEdge(u2,v1,newEdge);
+            lpGraph.setEdgeWeight(newEdge,w);
+            myGraph.costMap.put(newEdge,0);//这里暂时使用全局变量储存cost，因为这个库不允许单独添加属性，后面可以改进
+        }
+
+        //在G’中加入边(v1,v2)并且它的cost是1而weight是0
+        vit=graph.vertexSet().iterator();
+        while(vit.hasNext()){
+            int node=(int)vit.next();
+            int v1=node;
+            int v2=node+nodeNum;
+            if(node==startPoint||node==sinkPoint) continue;
+            DefaultWeightedEdge newEdge=lpGraph.getEdgeFactory().createEdge(v1,v2);
+            lpGraph.addEdge(v1,v2,newEdge);
+            lpGraph.setEdgeWeight(newEdge,0);
+            myGraph.costMap.put(newEdge,1);
+        }
+
+        myGraph.graph=lpGraph;
+        return myGraph;
     }
 
     static void write_lp_solution(glp_prob lp) {
