@@ -2,7 +2,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import Alg.JavaLPAlg;
+import Alg.ILP.JavaLPAlg;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

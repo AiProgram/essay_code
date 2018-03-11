@@ -1,5 +1,6 @@
 package MyGraph;
 
+import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.WeightedMultigraph;
 
@@ -19,4 +20,5 @@ public class MyGraph {
     public int startPoint;
     public int sinkPoint;
     public int maxComVertex;
+    public GraphPath<Integer,DefaultWeightedEdge> shortestPath;//普通的起点到终点的最短路径，且是原图的
 }

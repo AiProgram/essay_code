@@ -1,4 +1,4 @@
-package Alg;
+package Alg.ILP;
 
 import java.io.*;
 import java.util.*;
