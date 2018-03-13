@@ -53,6 +53,30 @@ public class NewAlg {
             residualGraph.graph.addVertex(v);
         }
 
+        //对于G中的每一条边，都尝试加入到G’中，但是端点被删除的添加会无效
+        while(eit.hasNext()){
+            DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
+            int source=(int)myGraph.graph.getEdgeSource(edge);
+            int target=(int)myGraph.graph.getEdgeTarget(edge);
+            double weight=myGraph.graph.getEdgeWeight(edge);
+            residualGraph.addNewEdge(source,target,weight,0);
+        }
+
+        //对于shortestPath中的每一个中间点(除了起始点和终点以外)都把边(v1,v2)、(v2,v1)加入，而且加上weight和cost
+        vit=residualGraph.shortestPath.getVertexList().iterator();
+        while(vit.hasNext()){
+            int v=(int)vit.next();
+            if(v!=startPoint&&v!=sinkPoint){
+                int v1=v+nodeNum;
+                int v2=v+2*nodeNum;
+                residualGraph.graph.addVertex(v1);//这里必须边添加成功，避免出现点不存在的情况
+                residualGraph.graph.addVertex(v2);
+                residualGraph.addNewEdge(v1,v2,0,scale);
+                residualGraph.addNewEdge(v2,v1,0,0);
+            }
+        }
+
+
         return myGraph;
     }
     public static void main(String args[]){
