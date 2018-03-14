@@ -13,9 +13,6 @@ import org.jgrapht.*;
 
 public class JavaLPAlg {
 
-    public int startPoint;
-    public int sinkPoint;
-    public int bound;
     Map<DefaultWeightedEdge,Integer> costMap=new HashMap<>();
 
     private String readJsonGraph(String fileName)
@@ -64,9 +61,9 @@ public class JavaLPAlg {
         WeightedMultigraph<Integer,DefaultWeightedEdge> graph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
         int nodeNumber=nodesArr.length();
         JSONObject graphObject=jsonObject.getJSONObject("graph");
-        startPoint =graphObject.getInt("S");
-        sinkPoint =graphObject.getInt("T");
-        bound=graphObject.getInt("bound");
+        int  startPoint =graphObject.getInt("S");
+        int  sinkPoint =graphObject.getInt("T");
+        int bound=graphObject.getInt("bound");
 
 
 
@@ -110,19 +107,19 @@ public class JavaLPAlg {
         return graph;
     }
 
-    private void solveWithGLPK(MyGraph myGraph){
+    public static void solveWithGLPK(MyGraph myGraph){
         glp_prob lp;
         glp_smcp parm;
         SWIGTYPE_p_int index;
         SWIGTYPE_p_double val;
         WeightedMultigraph<Integer,DefaultWeightedEdge> graph=myGraph.graph;
-        costMap=myGraph.costMap;
+        Map<DefaultWeightedEdge,Integer> costMap=myGraph.costMap;
         int ret;
         int edgeNumber=myGraph.edgeNum;
         int nodeNumber=myGraph.nodeNum;
-        startPoint=myGraph.startPoint;
-        sinkPoint=myGraph.sinkPoint;
-        bound=myGraph.maxComVertex;
+        int startPoint=myGraph.startPoint;
+        int sinkPoint=myGraph.sinkPoint;
+        int bound=myGraph.maxComVertex;
 
         System.out.println(edgeNumber+"  "+nodeNumber);
 
@@ -243,16 +240,16 @@ public class JavaLPAlg {
      *
      * 为ILP算法提供G‘，G'是从原始图G变换过来的
      * @param myGraph G
-     * @param startPoint 起始点
-     * @param sinkPoint  终止点
-     * @param maxComVertex 最大的共同点数量
+     *
+     *
+     *
      * @return G'
      */
-    public MyGraph getGraphForILP(MyGraph myGraph, int startPoint, int sinkPoint, int maxComVertex)
+    public  static MyGraph getGraphForILP(MyGraph myGraph)
     {
-        this.startPoint =startPoint;
-        this.sinkPoint =sinkPoint;
-        this.bound=maxComVertex;
+        int startPoint =myGraph.startPoint;
+        int sinkPoint =myGraph.sinkPoint;
+        int bound=myGraph.maxComVertex;
 
         WeightedMultigraph<Integer,DefaultWeightedEdge> graph=myGraph.graph;
         WeightedMultigraph<Integer,DefaultWeightedEdge> lpGraph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
@@ -305,9 +302,6 @@ public class JavaLPAlg {
         }
 
         myGraph.graph=lpGraph;
-        myGraph.startPoint=startPoint;
-        myGraph.sinkPoint=sinkPoint;
-        myGraph.maxComVertex=maxComVertex;
         return myGraph;
     }
 
@@ -334,8 +328,11 @@ public class JavaLPAlg {
     public void  test(){
         //String graphData=readJsonGraph("lp_500_25000_10_2.json");
         GraphRandomGenerator generator=new GraphRandomGenerator();
-        MyGraph myGraph=generator.generateRandomGraph(200,5000);
-        myGraph=getGraphForILP(myGraph,0,20,4);
+        MyGraph myGraph=generator.generateRandomGraph(400,5000);
+        myGraph.startPoint=0;
+        myGraph.sinkPoint=90;
+        myGraph.maxComVertex=4;
+        myGraph=getGraphForILP(myGraph);
         solveWithGLPK(myGraph);
     }
 

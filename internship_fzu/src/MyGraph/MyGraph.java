@@ -5,6 +5,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.WeightedMultigraph;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,6 +22,7 @@ public class MyGraph {
     public int sinkPoint;
     public int maxComVertex;
     public GraphPath<Integer,DefaultWeightedEdge> shortestPath;//普通的起点到终点的最短路径，且是原图的
+    public List<Integer>restrictedShortestPath;
 
     //方便在添加边的同时设置weight以及cost
     public DefaultWeightedEdge addNewEdge(int source ,int target,double weight,int cost){

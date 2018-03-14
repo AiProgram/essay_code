@@ -1,5 +1,6 @@
 package Alg.NewAlg;
 
+import Alg.ILP.JavaLPAlg;
 import GraphIO.GraphRandomGenerator;
 import MyGraph.MyGraph;
 import org.jgrapht.GraphPath;
@@ -14,10 +15,13 @@ import java.util.Iterator;
 import java.util.List;
 
 public class NewAlg {
-    public static MyGraph getResidualGraph(int startPoint,int sinkPoint,MyGraph myGraph,int scale){
+    static double INFINITY=1<<30;
+    public static MyGraph getResidualGraph(MyGraph myGraph,int scale){
         //找到最短路径
         int nodeNum=0;
         int edgeNum=0;
+        int startPoint=myGraph.startPoint;
+        int sinkPoint=myGraph.sinkPoint;
         GraphPath<Integer,DefaultWeightedEdge> shortestPath;
 
         if(myGraph==null) return null;
@@ -76,12 +80,111 @@ public class NewAlg {
             }
         }
 
+        eit=myGraph.graph.edgeSet().iterator();
+        while(eit.hasNext()){
+            DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
+            double w=myGraph.graph.getEdgeWeight(edge);
+            int source=(int)myGraph.graph.getEdgeSource(edge);
+            int target=(int)myGraph.graph.getEdgeTarget(edge);
+            List<Integer> vList=myGraph.shortestPath.getVertexList();
+            //当边(source,target)在shortestPath中时
+            if(vList.contains(source)&&vList.contains(target)&&(vList.indexOf(target)-vList.indexOf(source)==1)){
+                int u2=source;
+                int v1=target;
+                if(source!=startPoint&&target!=sinkPoint)
+                    u2=source+2*nodeNum;
+                if(target!=startPoint&&target!=sinkPoint)
+                    v1=target+nodeNum;
+                residualGraph.addNewEdge(v1,u2,-w,0);
+            }else {
+                //当source是shortestPath中的点时
+                if(vList.contains(source)&&source!=startPoint&&source!=sinkPoint)
+                {
+                    int u2=source+2*nodeNum;
+                    int v=target;
+                    if(vList.contains(target)&&target!=startPoint&&target!=sinkPoint)
+                        v+=nodeNum;
+                    residualGraph.addNewEdge(u2,v,w,0);
+                }
+                //当target是shortestPath中的点时
+                if(vList.contains(target)&&target!=startPoint&&target!=sinkPoint)
+                {
+                    int v1=target+nodeNum;
+                    int u=source;
+                    if(vList.contains(source)&&source!=startPoint&&source!=sinkPoint)
+                        u+=2*nodeNum;
+                    residualGraph.addNewEdge(u,v1,w,0);
+                }
+            }
+        }
+        return residualGraph;
+    }
 
-        return myGraph;
+    public static double RSPNoRecrusive(MyGraph myGraph){
+        List<Integer> path;
+        int startPoint=myGraph.startPoint;
+        int sinkPoint=myGraph.sinkPoint;
+        int maxComVertex=myGraph.maxComVertex;
+        WeightedMultigraph graph=myGraph.graph;
+        int nodeNum=graph.vertexSet().size();
+        int pathMap[][]=new int[nodeNum*3][maxComVertex+1];
+        double dynMat[][]=new double[nodeNum*3][maxComVertex+1];
+        int min_node=0;
+
+        //初始化
+        Iterator vit=graph.vertexSet().iterator();
+        Iterator eit;
+        while(vit.hasNext()){
+            int node=(int)vit.next();
+            if(node!=startPoint)
+                for(int mcv=0;mcv<maxComVertex+1;mcv++)
+                    dynMat[node][mcv]=INFINITY;
+        }
+        for(int mcv=0;mcv<maxComVertex+1;mcv++)
+            dynMat[startPoint][mcv]=0;
+
+        //主要算法
+        for(int mcv=1;mcv<maxComVertex+1;mcv++){
+            vit=graph.vertexSet().iterator();
+            while(vit.hasNext()){
+                int node=(int)vit.next();
+                dynMat[node][mcv]=dynMat[node][mcv-1];
+                pathMap[node][mcv]=node;
+            }
+            eit=graph.edgeSet().iterator();
+            while(eit.hasNext()){
+                DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
+                int source=(int)graph.getEdgeSource(edge);
+                int target=(int)graph.getEdgeTarget(edge);
+                double weight= graph.getEdgeWeight(edge);
+                if(myGraph.costMap.get(edge)==0){
+                    if(dynMat[target][mcv]>=dynMat[source][mcv]+weight)
+                    {
+                        dynMat[target][mcv]=dynMat[source][mcv]+weight;
+                        pathMap[target][mcv]=source;
+                    }
+                }else if(myGraph.costMap.get(edge)==1){
+                    if(dynMat[target][mcv]>=dynMat[source][mcv-1]+weight)
+                    {
+                        dynMat[target][mcv]=dynMat[source][mcv-1]+weight;
+                        pathMap[target][mcv]=source;
+
+                    }
+                }
+            }
+        }
+        return dynMat[sinkPoint][maxComVertex];
     }
     public static void main(String args[]){
         GraphRandomGenerator randomGenerator=new GraphRandomGenerator();
-        MyGraph myGraph=randomGenerator.generateRandomGraph(100,1000);
-        NewAlg.getResidualGraph(0,90,myGraph,1);
+        MyGraph myGraph=randomGenerator.generateRandomGraph(400,5000);
+        myGraph.startPoint=0;
+        myGraph.sinkPoint=20;
+        myGraph.maxComVertex=4;
+        MyGraph graph=NewAlg.getResidualGraph(myGraph,1);
+        double w=NewAlg.RSPNoRecrusive(graph);
+        System.out.println(w);
+        MyGraph graph1=JavaLPAlg.getGraphForILP(myGraph);
+        JavaLPAlg.solveWithGLPK(graph1);
     }
 }
