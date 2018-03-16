@@ -6,7 +6,7 @@ import copy
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
-import Utilities as util
+import utilities as util
 INFINITY=sys.maxsize/10
 def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,SCALE=50):
     #find original shortest path

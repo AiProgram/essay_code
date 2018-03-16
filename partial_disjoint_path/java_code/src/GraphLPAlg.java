@@ -190,9 +190,21 @@ public class GraphLPAlg {
     public void getLPGroup()
     {
         String graphDataFolder="./graph_data/";
+        File dataFolder=new File(graphDataFolder);
+        File folders[]=dataFolder.listFiles();
+        for(int i=0;i<folders.length;i++)
+        {
+            if(folders[i].isDirectory())
+            {
+                getLPDir(folders[i].getAbsolutePath());
+            }
+        }
+    }
+    public void getLPDir(String graphDataFolder)
+    {
         try
         {
-            File dataFile=new File(graphDataFolder+"data.json");
+            File dataFile=new File(graphDataFolder+"\\data.json");
             FileReader dataReader=new FileReader(dataFile);
             BufferedReader bufDataReader=new BufferedReader(dataReader);
             StringBuilder dataStr=new StringBuilder();
@@ -211,7 +223,7 @@ public class GraphLPAlg {
             {
                 JSONObject fileRec=fileRecArr.getJSONObject(i);
                 String lpGraphFile=fileRec.getString("lp_graph_file");
-                String graphData=readJsonGraph(graphDataFolder+lpGraphFile);
+                String graphData=readJsonGraph(graphDataFolder+"\\"+lpGraphFile);
                 Graph graph=parseJsonToGraph(graphData);
                 String lpFileName=lpGraphFile.split("\\.")[0];
                 getAlgLPFile(graph,lpFileName);
@@ -229,8 +241,22 @@ public class GraphLPAlg {
     }
     public void runCodeGroup()
     {
+        String graphDataFolder="./graph_data/";
+        File dataFolder=new File(graphDataFolder);
+        File folders[]=dataFolder.listFiles();
+        for(int i=0;i<folders.length;i++)
+        {
+            if(folders[i].isDirectory())
+            {
+                runCodeDir(folders[i].getAbsolutePath()+"\\");
+            }
+        }
+    }
+
+    public void runCodeDir(String curGraphFolder)
+    {
         String curPath=System.getProperty("user.dir");
-        String graphDataFolder=curPath+"\\graph_data\\";
+        String graphDataFolder=curGraphFolder;
         String outPutFolder=curPath+"\\solFiles\\";
         String lpFolder=curPath+"\\lpFiles\\";
         String glpkPath="E:\\ProgramFiles\\glpk-4.63\\w64\\glpsol";

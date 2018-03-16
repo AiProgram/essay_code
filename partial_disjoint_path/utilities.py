@@ -118,9 +118,17 @@ def generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_
     json.dump(rec_main.to_object(),con_file)
     con_file.close()
 
-def run_new_alg_group(SCALE=1):
-    """run new algorithm on graphs in the folder in batch"""
+def run_new_alg_group():
+    """run new algorithm on graphs in the big folder which has many samll folders"""
     os.chdir(os.path.dirname(__file__)+graph_data_folder)
+    folders=os.listdir(os.path.dirname(__file__)+graph_data_folder)
+    for folder in folders:
+        if os.path.isdir(folder):
+            run_new_alg_dir(folder)
+
+def run_new_alg_dir(cur_folder_path,SCALE=1):
+    """run new algorithm on graphs in the folder in batch"""
+    os.chdir(cur_folder_path)
     con_file=open("data.json","r")
     rec_object=json.load(con_file)
     con_file.close()
@@ -255,9 +263,16 @@ def save_graph_to_json(graph,graph_file_name):
     json_data=json.dumps(graph_data)
     file.write(json_data)
     file.close()
+
 def collect_data_csv():
+    os.chdir(os.path.dirname(__file__) + graph_data_folder)
+    folders=os.listdir(os.path.dirname(__file__) + graph_data_folder)
+    for folder in folders:
+        if os.path.isdir(folder):
+            collect_data_folder(folder)
+def collect_data_folder(cur_csv_folder):
     """collect the information of data.json and write them into a csv file for futuer analysis"""
-    os.chdir(os.path.dirname(__file__)+graph_data_folder)
+    os.chdir(cur_csv_folder)
     con_file=open("data.json","r")
     rec_object=json.load(con_file)
     con_file.close()
@@ -282,6 +297,8 @@ def collect_data_csv():
             #rec["lp_alg_result"]=0
             rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
             file_rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
+            if rec["new_alg_result"]>0 and rec["lp_alg_result"]>0 and rec["new_alg_result"]!=rec["lp_alg_result"]:
+                continue
             data.append(rec)
         writer.writeheader()
         writer.writerows(data)

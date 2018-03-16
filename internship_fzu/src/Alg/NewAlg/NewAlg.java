@@ -175,6 +175,20 @@ public class NewAlg {
         }
         return dynMat[sinkPoint][maxComVertex];
     }
+
+    public static double getSPWeight(WeightedMultigraph<Integer,DefaultWeightedEdge> graph,List<Integer>path){
+        double sum=0;
+        Iterator vit=path.iterator();
+        int source=(int)vit.next();
+        int target;
+        while(vit.hasNext()){
+            target=(int)vit.next();
+            DefaultWeightedEdge edge=graph.getEdge(source,target);
+            sum+= graph.getEdgeWeight(edge);
+            source=target;
+        }
+        return sum;
+    }
     public static void main(String args[]){
         GraphRandomGenerator randomGenerator=new GraphRandomGenerator();
         MyGraph myGraph=randomGenerator.generateRandomGraph(400,5000);
@@ -183,7 +197,8 @@ public class NewAlg {
         myGraph.maxComVertex=4;
         MyGraph graph=NewAlg.getResidualGraph(myGraph,1);
         double w=NewAlg.RSPNoRecrusive(graph);
-        System.out.println(w);
+        double w2=getSPWeight(myGraph.graph,myGraph.shortestPath.getVertexList());
+        System.out.println(w+w2);
         MyGraph graph1=JavaLPAlg.getGraphForILP(myGraph);
         JavaLPAlg.solveWithGLPK(graph1);
     }

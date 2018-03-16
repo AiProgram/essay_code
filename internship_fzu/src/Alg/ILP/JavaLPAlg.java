@@ -3,6 +3,7 @@ package Alg.ILP;
 import java.io.*;
 import java.util.*;
 
+import Alg.NewAlg.NewAlg;
 import GraphIO.GraphRandomGenerator;
 import MyGraph.MyGraph;
 import org.gnu.glpk.*;
@@ -41,7 +42,7 @@ public class JavaLPAlg {
         return graphData;
     }
 
-    private Graph parseJsonToGraph(String jsonStr)
+    private MyGraph parseJsonToGraph(String jsonStr)
     {
         int id;
         int source;
@@ -58,17 +59,25 @@ public class JavaLPAlg {
         JSONArray  edgesArr=new JSONArray();
         edgesArr=jsonObject.getJSONArray("links");
 
+
+        MyGraph myGraph=new MyGraph();
         WeightedMultigraph<Integer,DefaultWeightedEdge> graph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
+        myGraph.graph=graph;
+        myGraph.costMap=new HashMap<>();
         int nodeNumber=nodesArr.length();
         JSONObject graphObject=jsonObject.getJSONObject("graph");
         int  startPoint =graphObject.getInt("S");
         int  sinkPoint =graphObject.getInt("T");
         int bound=graphObject.getInt("bound");
+        myGraph.startPoint=startPoint;
+        myGraph.sinkPoint=sinkPoint;
+        myGraph.maxComVertex=bound;
+        myGraph.nodeNum=nodesArr.length();
 
 
 
         //deal with the nodes
-        for(int i=0;i<nodeNumber;i++)
+        for(int i=0;i<myGraph.nodeNum;i++)
         {
             JSONObject tmpObject=nodesArr.getJSONObject(i);
             id=tmpObject.getInt("id");
@@ -88,23 +97,17 @@ public class JavaLPAlg {
             realSrc=source;
             realTar=target;
 
-            DefaultWeightedEdge edge=edgeEdgeFactory.createEdge(realSrc,realTar);
-            costMap.put(edge,cost);
-            graph.setEdgeWeight(edge,weight);
-            graph.addEdge(realSrc,realTar,edge);
+            myGraph.addNewEdge(realSrc,realTar,weight,cost);
 
             //graph.edges.add(new Edge(realSrc,realTar,weight,cost));
             //The graph with duplicates are too complex, so we add the second duplicator here
             if(cost==1)
             {
-                edge=edgeEdgeFactory.createEdge(realSrc,realTar);
-                costMap.put(edge,0);
-                graph.setEdgeWeight(edge,0);
-                graph.addEdge(realSrc,realTar,edge);
+                myGraph.addNewEdge(realSrc,realTar,0,0);
             }
         }
-
-        return graph;
+        myGraph.edgeNum=myGraph.graph.edgeSet().size();
+        return myGraph;
     }
 
     public static void solveWithGLPK(MyGraph myGraph){
@@ -154,7 +157,7 @@ public class JavaLPAlg {
                 int a;
                 int b;
 
-                GLPK.glp_set_row_name(lp,j,"c"+i);
+                GLPK.glp_set_row_name(lp,j,"c"+j);
 
                 //int node=graph.nodes[i-1];
                 int node=(int)vit.next();
@@ -181,7 +184,7 @@ public class JavaLPAlg {
                 }else{
                     b=0;
                 }
-                GLPK.glp_set_row_bnds(lp,i,GLPKConstants.GLP_FX,b,b);
+                GLPK.glp_set_row_bnds(lp,j,GLPKConstants.GLP_FX,b,b);
 
                 GLPK.glp_set_mat_row(lp, j, edgeNumber, index, val);
                 j++;
@@ -207,7 +210,7 @@ public class JavaLPAlg {
             GLPK.glp_set_obj_name(lp, "result");
             GLPK.glp_set_obj_dir(lp, GLPKConstants.GLP_MIN);
             eit=graph.edgeSet().iterator();
-            for(int i=0;i<edgeNumber;i++)
+            for(int i=1;i<=edgeNumber;i++)
             {
                 //Edge edge=graph.edges.get(i);
                 DefaultWeightedEdge edge=(DefaultWeightedEdge) eit.next();
@@ -218,6 +221,11 @@ public class JavaLPAlg {
             parm = new glp_smcp();
             GLPK.glp_init_smcp(parm);
             ret = GLPK.glp_simplex(lp, parm);
+            GLPK.glp_write_sol(lp,"sol.sol");
+
+            glp_cpxcp p=new glp_cpxcp();
+            GLPK.glp_init_cpxcp(p);
+            GLPK.glp_write_lp(lp,p,"lp.lp");
 
             // 获得结果
             if (ret == 0) {
@@ -326,14 +334,15 @@ public class JavaLPAlg {
         }
     }
     public void  test(){
-        //String graphData=readJsonGraph("lp_500_25000_10_2.json");
-        GraphRandomGenerator generator=new GraphRandomGenerator();
-        MyGraph myGraph=generator.generateRandomGraph(400,5000);
-        myGraph.startPoint=0;
-        myGraph.sinkPoint=90;
-        myGraph.maxComVertex=4;
-        myGraph=getGraphForILP(myGraph);
-        solveWithGLPK(myGraph);
+        String graphData=readJsonGraph("lp_10_10_10_0.json");
+        MyGraph newGraph=parseJsonToGraph(graphData);
+//        GraphRandomGenerator generator=new GraphRandomGenerator();
+//        MyGraph myGraph=generator.generateRandomGraph(400,5000);
+//        myGraph.startPoint=0;
+//        myGraph.sinkPoint=20;
+//        myGraph.maxComVertex=10;
+        //newGraph=getGraphForILP(newGraph);
+        solveWithGLPK(newGraph);
     }
 
     public static  void main(String args[]){
