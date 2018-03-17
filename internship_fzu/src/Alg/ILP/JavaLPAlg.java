@@ -66,12 +66,12 @@ public class JavaLPAlg {
         myGraph.costMap=new HashMap<>();
         int nodeNumber=nodesArr.length();
         JSONObject graphObject=jsonObject.getJSONObject("graph");
-        int  startPoint =graphObject.getInt("S");
-        int  sinkPoint =graphObject.getInt("T");
-        int bound=graphObject.getInt("bound");
-        myGraph.startPoint=startPoint;
-        myGraph.sinkPoint=sinkPoint;
-        myGraph.maxComVertex=bound;
+//        int  startPoint =graphObject.getInt("S");
+//        int  sinkPoint =graphObject.getInt("T");
+//        int bound=graphObject.getInt("bound");
+//        myGraph.startPoint=startPoint;
+//        myGraph.sinkPoint=sinkPoint;
+//        myGraph.maxComVertex=bound;
         myGraph.nodeNum=nodesArr.length();
 
 
@@ -93,18 +93,18 @@ public class JavaLPAlg {
             source=tmpObject.getInt("source");
             target=tmpObject.getInt("target");
             weight=tmpObject.getInt("weight");
-            cost=tmpObject.getInt("cost");
+            cost=0;
             realSrc=source;
             realTar=target;
 
             myGraph.addNewEdge(realSrc,realTar,weight,cost);
 
             //graph.edges.add(new Edge(realSrc,realTar,weight,cost));
-            //The graph with duplicates are too complex, so we add the second duplicator here
-            if(cost==1)
-            {
-                myGraph.addNewEdge(realSrc,realTar,0,0);
-            }
+//            //The graph with duplicates are too complex, so we add the second duplicator here
+//            if(cost==1)
+//            {
+//                myGraph.addNewEdge(realSrc,realTar,0,0);
+//            }
         }
         myGraph.edgeNum=myGraph.graph.edgeSet().size();
         return myGraph;
@@ -259,29 +259,36 @@ public class JavaLPAlg {
         int sinkPoint =myGraph.sinkPoint;
         int bound=myGraph.maxComVertex;
 
-        WeightedMultigraph<Integer,DefaultWeightedEdge> graph=myGraph.graph;
-        WeightedMultigraph<Integer,DefaultWeightedEdge> lpGraph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
-        lpGraph.addVertex(startPoint);
-        lpGraph.addVertex(sinkPoint);
+        MyGraph lpGraph=new MyGraph();
+        lpGraph.startPoint=startPoint;
+        lpGraph.sinkPoint=sinkPoint;
+        lpGraph.maxComVertex=bound;
+        lpGraph.nodeNum=myGraph.nodeNum;
+        lpGraph.edgeNum=myGraph.edgeNum;
+        lpGraph.graph=new WeightedMultigraph(DefaultWeightedEdge.class);
+        lpGraph.costMap=new HashMap<>();
+
+        lpGraph.graph.addVertex(startPoint);
+        lpGraph.graph.addVertex(sinkPoint);
         //我们认为点的id应该在0和nodeNum-1之间
-        int nodeNum=graph.vertexSet().size();
-        Iterator vit=graph.vertexSet().iterator();
+        int nodeNum=myGraph.graph.vertexSet().size();
+        Iterator vit=myGraph.graph.vertexSet().iterator();
         while(vit.hasNext()){
             int node=(Integer)vit.next();
             if(node==startPoint||node==sinkPoint) continue;
             else{
-                lpGraph.addVertex(node);
-                lpGraph.addVertex(node+nodeNum);
+                lpGraph.graph.addVertex(node);
+                lpGraph.graph.addVertex(node+nodeNum);
             }
         }
 
         //在G中进入v的边现在G’中进入v1，而离开v的边现在G‘中离开v2
-        Iterator eit=graph.edgeSet().iterator();
+        Iterator eit=myGraph.graph.edgeSet().iterator();
         while(eit.hasNext()){
             DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
-            double w=graph.getEdgeWeight(edge);
-            int u=graph.getEdgeSource(edge);
-            int v=graph.getEdgeTarget(edge);
+            double w=myGraph.graph.getEdgeWeight(edge);
+            int u=(int)myGraph.graph.getEdgeSource(edge);
+            int v=(int)myGraph.graph.getEdgeTarget(edge);
             int v1=0;
             int u2=0;
 
@@ -290,27 +297,22 @@ public class JavaLPAlg {
             if(u==startPoint||u==sinkPoint) u2=u;
             else u2=u+nodeNum;
 
-            DefaultWeightedEdge newEdge=lpGraph.getEdgeFactory().createEdge(u2,v1);
-            lpGraph.addEdge(u2,v1,newEdge);
-            lpGraph.setEdgeWeight(newEdge,w);
-            myGraph.costMap.put(newEdge,0);//这里暂时使用全局变量储存cost，因为这个库不允许单独添加属性，后面可以改进
+            lpGraph.addNewEdge(u2,v1,w,0);//这里暂时使用全局变量储存cost，因为这个库不允许单独添加属性，后面可以改进
         }
 
         //在G’中加入边(v1,v2)并且它的cost是1而weight是0
-        vit=graph.vertexSet().iterator();
+        vit=myGraph.graph.vertexSet().iterator();
         while(vit.hasNext()){
             int node=(int)vit.next();
             int v1=node;
             int v2=node+nodeNum;
             if(node==startPoint||node==sinkPoint) continue;
-            DefaultWeightedEdge newEdge=lpGraph.getEdgeFactory().createEdge(v1,v2);
-            lpGraph.addEdge(v1,v2,newEdge);
-            lpGraph.setEdgeWeight(newEdge,0);
-            myGraph.costMap.put(newEdge,1);
+            lpGraph.addNewEdge(node,node+nodeNum,0,1);
+            lpGraph.addNewEdge(node,node+nodeNum,0,0);
         }
-
-        myGraph.graph=lpGraph;
-        return myGraph;
+        lpGraph.edgeNum=lpGraph.graph.edgeSet().size();
+        lpGraph.nodeNum=lpGraph.graph.vertexSet().size();
+        return lpGraph;
     }
 
     static void write_lp_solution(glp_prob lp) {
@@ -334,15 +336,23 @@ public class JavaLPAlg {
         }
     }
     public void  test(){
-        String graphData=readJsonGraph("lp_10_10_10_0.json");
+        String graphData=readJsonGraph("ori_10_20_4_10.json");
         MyGraph newGraph=parseJsonToGraph(graphData);
+        newGraph.startPoint=0;
+        newGraph.sinkPoint=5;
+        newGraph.maxComVertex=4;
 //        GraphRandomGenerator generator=new GraphRandomGenerator();
 //        MyGraph myGraph=generator.generateRandomGraph(400,5000);
 //        myGraph.startPoint=0;
 //        myGraph.sinkPoint=20;
 //        myGraph.maxComVertex=10;
-        //newGraph=getGraphForILP(newGraph);
-        solveWithGLPK(newGraph);
+//        System.out.println(newGraph.graph.vertexSet().size());
+//        System.out.println(newGraph.graph.edgeSet().size());
+
+        MyGraph lpGraph=getGraphForILP(newGraph);
+        System.out.println(lpGraph.graph.vertexSet().size());
+        System.out.println(lpGraph.graph.edgeSet().size());
+        solveWithGLPK(lpGraph);
     }
 
     public static  void main(String args[]){
