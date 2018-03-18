@@ -16,7 +16,7 @@ public class JavaLPAlg {
 
     Map<DefaultWeightedEdge,Integer> costMap=new HashMap<>();
 
-    private String readJsonGraph(String fileName)
+    public static String readJsonGraph(String fileName)
     {
         String graphData=null;
         String line;
@@ -42,7 +42,7 @@ public class JavaLPAlg {
         return graphData;
     }
 
-    private MyGraph parseJsonToGraph(String jsonStr)
+    public static MyGraph parseJsonToGraph(String jsonStr)
     {
         int id;
         int source;
@@ -61,7 +61,7 @@ public class JavaLPAlg {
 
 
         MyGraph myGraph=new MyGraph();
-        WeightedMultigraph<Integer,DefaultWeightedEdge> graph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
+        DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> graph=new DirectedWeightedMultigraph<Integer, DefaultWeightedEdge>(DefaultWeightedEdge.class);
         myGraph.graph=graph;
         myGraph.costMap=new HashMap<>();
         int nodeNumber=nodesArr.length();
@@ -115,7 +115,7 @@ public class JavaLPAlg {
         glp_smcp parm;
         SWIGTYPE_p_int index;
         SWIGTYPE_p_double val;
-        WeightedMultigraph<Integer,DefaultWeightedEdge> graph=myGraph.graph;
+        DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> graph=myGraph.graph;
         Map<DefaultWeightedEdge,Integer> costMap=myGraph.costMap;
         int ret;
         int edgeNumber=myGraph.edgeNum;
@@ -221,11 +221,11 @@ public class JavaLPAlg {
             parm = new glp_smcp();
             GLPK.glp_init_smcp(parm);
             ret = GLPK.glp_simplex(lp, parm);
-            GLPK.glp_write_sol(lp,"sol.sol");
-
-            glp_cpxcp p=new glp_cpxcp();
-            GLPK.glp_init_cpxcp(p);
-            GLPK.glp_write_lp(lp,p,"lp.lp");
+//            GLPK.glp_write_sol(lp,"sol.sol");
+//
+//            glp_cpxcp p=new glp_cpxcp();
+//            GLPK.glp_init_cpxcp(p);
+//            GLPK.glp_write_lp(lp,p,"lp.lp");
 
             // 获得结果
             if (ret == 0) {
@@ -265,7 +265,7 @@ public class JavaLPAlg {
         lpGraph.maxComVertex=bound;
         lpGraph.nodeNum=myGraph.nodeNum;
         lpGraph.edgeNum=myGraph.edgeNum;
-        lpGraph.graph=new WeightedMultigraph(DefaultWeightedEdge.class);
+        lpGraph.graph=new DirectedWeightedMultigraph(DefaultWeightedEdge.class);
         lpGraph.costMap=new HashMap<>();
 
         lpGraph.graph.addVertex(startPoint);
@@ -326,20 +326,20 @@ public class JavaLPAlg {
         System.out.print(name);
         System.out.print(" = ");
         System.out.println(val);
-        n = GLPK.glp_get_num_cols(lp);
-        for (i = 1; i <= n; i++) {
-            name = GLPK.glp_get_col_name(lp, i);
-            val = GLPK.glp_get_col_prim(lp, i);
-            System.out.print(name);
-            System.out.print(" = ");
-            System.out.println(val);
-        }
+//        n = GLPK.glp_get_num_cols(lp);
+//        for (i = 1; i <= n; i++) {
+//            name = GLPK.glp_get_col_name(lp, i);
+//            val = GLPK.glp_get_col_prim(lp, i);
+//            System.out.print(name);
+//            System.out.print(" = ");
+//            System.out.println(val);
+//        }
     }
     public void  test(){
-        String graphData=readJsonGraph("ori_10_20_4_10.json");
+        String graphData=readJsonGraph("ori_100_1000_4_3.json");
         MyGraph newGraph=parseJsonToGraph(graphData);
         newGraph.startPoint=0;
-        newGraph.sinkPoint=5;
+        newGraph.sinkPoint=10;
         newGraph.maxComVertex=4;
 //        GraphRandomGenerator generator=new GraphRandomGenerator();
 //        MyGraph myGraph=generator.generateRandomGraph(400,5000);

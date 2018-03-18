@@ -2,6 +2,7 @@ package MyGraph;
 
 import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.jgrapht.graph.WeightedMultigraph;
 
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import java.util.Map;
  * 包装MyGraph以便添加其他属性,例如边上的cost等
  */
 public class MyGraph {
-    public WeightedMultigraph graph;//JGraphT所能提供的graph格式
+    public DirectedWeightedMultigraph graph;//JGraphT所能提供的graph格式
     public Map<DefaultWeightedEdge,Integer> costMap;
     public int nodeNum;
     public int edgeNum;

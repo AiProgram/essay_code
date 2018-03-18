@@ -19,7 +19,7 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
         node_num=graph.number_of_nodes()
         edge_num=graph.number_of_edges()
     try:
-        shortest_path=nx.shortest_path(graph,start_point_num,des_point_num,"weight")
+        shortest_path=nx.dijkstra_path(graph,start_point_num,des_point_num,"weight")
     except :
         return 
     if debug is True:
@@ -33,6 +33,7 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
         if p != start_point_num and p != des_point_num:
             residual_graph.remove_node(p)
 
+
     # For each edge e ∈G' Set c(e) := 0
     for s,t in residual_graph.edges():
         residual_graph.add_edge(s,t,cost=0)
@@ -45,7 +46,6 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
             p2=p+2*node_num
             residual_graph.add_edge(p1,p2,weight=0,cost=SCALE)
             residual_graph.add_edge(p2,p1,weight=0,cost=0)
-    
     #
     for u,v in graph.edges():
         w=graph[u][v]["weight"]
@@ -77,6 +77,7 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
         plt.subplot(111)
         nx.draw(graph, with_labels=True, font_weight='light')
         #plt.show()
+    
     
     return shortest_path,residual_graph
 

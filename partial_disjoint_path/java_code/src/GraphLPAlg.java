@@ -311,7 +311,7 @@ public class GraphLPAlg {
     }
     public  void test()
     {
-        //getLPGroup();
+        getLPGroup();
         runCodeGroup();
     }
 

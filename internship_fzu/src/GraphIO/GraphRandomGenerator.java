@@ -6,6 +6,7 @@ import org.jgrapht.VertexFactory;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
 import org.jgrapht.generate.GnmRandomGraphGenerator;
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.jgrapht.graph.WeightedMultigraph;
 
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import java.util.Map;
 import java.util.Random;
 
 public class GraphRandomGenerator {
-    public WeightedMultigraph<Integer,DefaultWeightedEdge> graph=new WeightedMultigraph<>(DefaultWeightedEdge.class);
+    public DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> graph=new DirectedWeightedMultigraph<Integer, DefaultWeightedEdge>(DefaultWeightedEdge.class);
     public Map<DefaultWeightedEdge,Integer> costMap=new HashMap<>();
 
     public MyGraph generateRandomGraph(int nodeNum, int edgeNum)
