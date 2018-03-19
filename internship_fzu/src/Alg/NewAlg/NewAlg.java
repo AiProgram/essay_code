@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static Alg.ILP.JavaLPAlg.parseJsonToGraph;
+import static Alg.Util.Util.getSPWeight;
 
 public class NewAlg {
     static double INFINITY=1<<30;
@@ -183,7 +184,6 @@ public class NewAlg {
                     {
                         dynMat[target][mcv]=dynMat[source][mcv-1]+weight;
                         pathMap[target][mcv]=source;
-
                     }
                 }
             }
@@ -191,19 +191,7 @@ public class NewAlg {
         return dynMat[sinkPoint][maxComVertex];
     }
 
-    public static double getSPWeight(DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> graph,List<Integer>path){
-        double sum=0;
-        Iterator vit=path.iterator();
-        int source=(int)vit.next();
-        int target;
-        while(vit.hasNext()){
-            target=(int)vit.next();
-            DefaultWeightedEdge edge=graph.getEdge(source,target);
-            sum+= graph.getEdgeWeight(edge);
-            source=target;
-        }
-        return sum;
-    }
+
     public static void main(String args[]){
         GraphRandomGenerator randomGenerator=new GraphRandomGenerator();
         String graphData=JavaLPAlg.readJsonGraph("ori_100_1000_4_0.json");
