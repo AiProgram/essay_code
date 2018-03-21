@@ -3,7 +3,7 @@ import csv
 import os
 import time
 import random
-import Utilities as util
+import utilities as util
 import AlgorithmMain as am
 #this folder path is relative to our folder that stores this python file
 snap_graph_folder="\\snap_graph\\"

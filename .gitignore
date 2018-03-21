@@ -12,3 +12,7 @@ glpk-4.64
 jgrapht-1.1.0
 *.lp
 *.sol
+*.gz
+*.txt
+*.csv
+tmp

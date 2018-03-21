@@ -1,6 +1,7 @@
 package Alg.NewAlg;
 
 import Alg.ILP.JavaLPAlg;
+import Alg.MWLD.MWLD;
 import GraphIO.GraphRandomGenerator;
 import MyGraph.MyGraph;
 import org.jgrapht.Graph;
@@ -193,20 +194,26 @@ public class NewAlg {
 
 
     public static void main(String args[]){
-        GraphRandomGenerator randomGenerator=new GraphRandomGenerator();
-        String graphData=JavaLPAlg.readJsonGraph("ori_100_1000_4_0.json");
-        MyGraph myGraph=parseJsonToGraph(graphData);
-        myGraph.startPoint=0;
-        myGraph.sinkPoint=5;
-        myGraph.maxComVertex=4;
+        for(int t=0;t<20;t++) {
+            GraphRandomGenerator randomGenerator = new GraphRandomGenerator();
+            MyGraph myGraph = randomGenerator.generateRandomGraph(100, 4000);
+            myGraph.startPoint = 0;
+            myGraph.sinkPoint = 5;
+            myGraph.maxComVertex = 4;
 
 
-        MyGraph graph=NewAlg.getResidualGraph(myGraph,1);
-        double w=NewAlg.RSPNoRecrusive(graph);
-        double w2=getSPWeight(myGraph.graph,myGraph.shortestPath.getVertexList());
-        System.out.println(w+w2);
+            MyGraph graph = NewAlg.getResidualGraph(myGraph, 1);
+            double w = NewAlg.RSPNoRecrusive(graph);
+            double w2 = getSPWeight(myGraph.graph, myGraph.shortestPath.getVertexList());
+            System.out.println(w + w2);
 
-        MyGraph graph1=JavaLPAlg.getGraphForILP(myGraph);
-        JavaLPAlg.solveWithGLPK(graph1);
+            MyGraph graph1 = JavaLPAlg.getGraphForILP(myGraph);
+            JavaLPAlg.solveWithGLPK(graph1);
+
+            double weight = MWLD.mwldALg(myGraph);
+            System.out.println(weight);
+
+            System.out.print("\n\n");
+        }
     }
 }
