@@ -22,6 +22,8 @@ public class MyGraph {
     public int startPoint;
     public int sinkPoint;
     public int maxComVertex;
+    public boolean multiGraph=true;
+    public boolean directed=true;
     public GraphPath<Integer,DefaultWeightedEdge> shortestPath;//普通的起点到终点的最短路径，且是原图的
     public List<Integer>restrictedShortestPath;
 

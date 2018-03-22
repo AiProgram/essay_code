@@ -3,6 +3,7 @@ package Alg.NewAlg;
 import Alg.ILP.JavaLPAlg;
 import Alg.MWLD.MWLD;
 import GraphIO.GraphRandomGenerator;
+import GraphIO.GraphWriter;
 import MyGraph.MyGraph;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
@@ -194,9 +195,10 @@ public class NewAlg {
 
 
     public static void main(String args[]){
-        for(int t=0;t<20;t++) {
+        for(int t=0;t<1;t++) {
             GraphRandomGenerator randomGenerator = new GraphRandomGenerator();
-            MyGraph myGraph = randomGenerator.generateRandomGraph(100, 4000);
+            String jsonStr= JavaLPAlg.readJsonGraph("graph.json");
+            MyGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
             myGraph.startPoint = 0;
             myGraph.sinkPoint = 5;
             myGraph.maxComVertex = 4;
@@ -213,6 +215,7 @@ public class NewAlg {
             double weight = MWLD.mwldALg(myGraph);
             System.out.println(weight);
 
+            GraphWriter.saveGraphToJson(myGraph,"graph.json");
             System.out.print("\n\n");
         }
     }
