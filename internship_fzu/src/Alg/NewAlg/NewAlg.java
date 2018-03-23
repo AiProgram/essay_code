@@ -2,6 +2,8 @@ package Alg.NewAlg;
 
 import Alg.ILP.JavaLPAlg;
 import Alg.MWLD.MWLD;
+import GraphIO.CSVCol;
+import GraphIO.CSVRecorder;
 import GraphIO.GraphRandomGenerator;
 import GraphIO.GraphWriter;
 import MyGraph.MyGraph;
@@ -14,9 +16,8 @@ import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.jgrapht.graph.WeightedMultigraph;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.sql.Time;
+import java.util.*;
 import java.util.List;
 
 import static Alg.ILP.JavaLPAlg.parseJsonToGraph;
@@ -195,28 +196,58 @@ public class NewAlg {
 
 
     public static void main(String args[]){
-        for(int t=0;t<1;t++) {
+        int time=5;
+        String resultArr[][]=new String[time][CSVCol.colNum];//用于记录算法运行数据记录进入csv表格中
+        long startTime;
+        long endTime;
+
+        for(int t=0;t<time;t++) {
             GraphRandomGenerator randomGenerator = new GraphRandomGenerator();
-            String jsonStr= JavaLPAlg.readJsonGraph("graph.json");
-            MyGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
+//            String jsonStr= JavaLPAlg.readJsonGraph("graph.json");
+//            MyGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
+            MyGraph myGraph=randomGenerator.generateRandomGraph(100,4000);
             myGraph.startPoint = 0;
-            myGraph.sinkPoint = 5;
+            myGraph.sinkPoint = 20;
             myGraph.maxComVertex = 4;
 
-
+            startTime=System.currentTimeMillis();
             MyGraph graph = NewAlg.getResidualGraph(myGraph, 1);
             double w = NewAlg.RSPNoRecrusive(graph);
             double w2 = getSPWeight(myGraph.graph, myGraph.shortestPath.getVertexList());
-            System.out.println(w + w2);
+            double newResult=w+w2;
+            endTime=System.currentTimeMillis();
+            long newRunTime=endTime-startTime;
 
+            startTime=System.currentTimeMillis();
             MyGraph graph1 = JavaLPAlg.getGraphForILP(myGraph);
-            JavaLPAlg.solveWithGLPK(graph1);
+            double ILPResult=JavaLPAlg.solveWithGLPK(graph1);
+            endTime=System.currentTimeMillis();
+            long ILPRunTime=endTime-startTime;
 
-            double weight = MWLD.mwldALg(myGraph);
-            System.out.println(weight);
+            startTime=System.currentTimeMillis();
+            double mwldResult = MWLD.mwldALg(myGraph);
+            endTime=System.currentTimeMillis();
+            long mwldRunTime=endTime-startTime;
 
             GraphWriter.saveGraphToJson(myGraph,"graph.json");
+
+            resultArr[t][CSVCol.graphId]=Integer.toString(t);
+            resultArr[t][CSVCol.startPoint]=Integer.toString(myGraph.startPoint);
+            resultArr[t][CSVCol.sinkPoint]=Integer.toString(myGraph.sinkPoint);
+            resultArr[t][CSVCol.maxComVertex]=Integer.toString(myGraph.maxComVertex);
+
+            resultArr[t][CSVCol.ILPResult]=Double.toString(ILPResult);
+            resultArr[t][CSVCol.ILPRunTime]=Long.toString(ILPRunTime);
+
+            resultArr[t][CSVCol.mwldResult]=Double.toString(mwldResult);
+            resultArr[t][CSVCol.mwldRunTime]=Long.toString(mwldRunTime);
+
+            resultArr[t][CSVCol.newAlgResult]=Double.toString(newResult);
+            resultArr[t][CSVCol.newAlgRunTime]=Long.toString(newRunTime);
             System.out.print("\n\n");
         }
+
+        CSVRecorder csvRecorder=new CSVRecorder();
+        csvRecorder.writeToCSV("1.csv",resultArr);
     }
 }

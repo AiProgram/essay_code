@@ -110,7 +110,7 @@ public class JavaLPAlg {
         return myGraph;
     }
 
-    public static void solveWithGLPK(MyGraph myGraph){
+    public static double solveWithGLPK(MyGraph myGraph){
         glp_prob lp;
         glp_smcp parm;
         SWIGTYPE_p_int index;
@@ -126,6 +126,7 @@ public class JavaLPAlg {
 
         System.out.println(edgeNumber+"  "+nodeNumber);
 
+        double result=0;
         try{
 
             //建立问题
@@ -229,9 +230,10 @@ public class JavaLPAlg {
 
             // 获得结果
             if (ret == 0) {
-                write_lp_solution(lp);
+                result=write_lp_solution(lp);
             } else {
                 System.out.println("The problem could not be solved");
+                return -1;
             }
 
             // 释放内存
@@ -240,8 +242,9 @@ public class JavaLPAlg {
         }catch (Exception e){
             e.printStackTrace();
             ret=1;
+            return -1;
         }
-
+        return result;
     }
 
     /**
@@ -315,7 +318,7 @@ public class JavaLPAlg {
         return lpGraph;
     }
 
-    static void write_lp_solution(glp_prob lp) {
+    static double write_lp_solution(glp_prob lp) {
         int i;
         int n;
         String name;
@@ -334,6 +337,7 @@ public class JavaLPAlg {
 //            System.out.print(" = ");
 //            System.out.println(val);
 //        }
+        return val;
     }
     public void  test(){
         String graphData=readJsonGraph("ori_100_1000_4_3.json");
