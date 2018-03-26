@@ -22,6 +22,7 @@ import java.util.List;
 
 import static Alg.ILP.JavaLPAlg.parseJsonToGraph;
 import static Alg.Util.Util.getSPWeight;
+import static java.lang.StrictMath.round;
 
 public class NewAlg {
     static double INFINITY=1<<30;
@@ -75,6 +76,8 @@ public class NewAlg {
             double weight=myGraph.graph.getEdgeWeight(edge);
             residualGraph.addNewEdge(source,target,weight,0);
         }
+
+        if(myGraph.shortestPath.getLength()==1) residualGraph.graph.removeEdge(startPoint,sinkPoint);
 
         //对于shortestPath中的每一个中间点(除了起始点和终点以外)都把边(v1,v2)、(v2,v1)加入，而且加上weight和cost
         vit=residualGraph.shortestPath.getVertexList().iterator();
@@ -196,25 +199,32 @@ public class NewAlg {
 
 
     public static void main(String args[]){
-        int time=5;
+        int time=100;
         String resultArr[][]=new String[time][CSVCol.colNum];//用于记录算法运行数据记录进入csv表格中
         long startTime;
         long endTime;
 
+        List<Integer> wrongList=new ArrayList<>();
         for(int t=0;t<time;t++) {
             GraphRandomGenerator randomGenerator = new GraphRandomGenerator();
 //            String jsonStr= JavaLPAlg.readJsonGraph("graph.json");
 //            MyGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
-            MyGraph myGraph=randomGenerator.generateRandomGraph(100,4000);
+            MyGraph myGraph=randomGenerator.generateRandomGraph(20,100);
             myGraph.startPoint = 0;
-            myGraph.sinkPoint = 20;
+            myGraph.sinkPoint = 5;
             myGraph.maxComVertex = 4;
 
+            MyGraph graph=null;
+            double newResult=-1;
             startTime=System.currentTimeMillis();
-            MyGraph graph = NewAlg.getResidualGraph(myGraph, 1);
-            double w = NewAlg.RSPNoRecrusive(graph);
-            double w2 = getSPWeight(myGraph.graph, myGraph.shortestPath.getVertexList());
-            double newResult=w+w2;
+            try {
+                graph = NewAlg.getResidualGraph(myGraph, 1);
+                double w = NewAlg.RSPNoRecrusive(graph);
+                double w2 = getSPWeight(myGraph.graph, myGraph.shortestPath.getVertexList());
+                newResult=w+w2;
+            }catch (Exception e){
+                e.printStackTrace();
+            }
             endTime=System.currentTimeMillis();
             long newRunTime=endTime-startTime;
 
@@ -229,7 +239,7 @@ public class NewAlg {
             endTime=System.currentTimeMillis();
             long mwldRunTime=endTime-startTime;
 
-            GraphWriter.saveGraphToJson(myGraph,"graph.json");
+//            GraphWriter.saveGraphToJson(myGraph,"graph.json");
 
             resultArr[t][CSVCol.graphId]=Integer.toString(t);
             resultArr[t][CSVCol.startPoint]=Integer.toString(myGraph.startPoint);
@@ -244,9 +254,14 @@ public class NewAlg {
 
             resultArr[t][CSVCol.newAlgResult]=Double.toString(newResult);
             resultArr[t][CSVCol.newAlgRunTime]=Long.toString(newRunTime);
+
+            if(round(newResult)>round(ILPResult)) {
+                wrongList.add(t);
+                GraphWriter.saveGraphToJson(myGraph,t+".json");
+            }
             System.out.print("\n\n");
         }
-
+        System.out.println(wrongList);
         CSVRecorder csvRecorder=new CSVRecorder();
         csvRecorder.writeToCSV("1.csv",resultArr);
     }

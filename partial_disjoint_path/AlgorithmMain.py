@@ -32,7 +32,8 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
     for p in shortest_path:
         if p != start_point_num and p != des_point_num:
             residual_graph.remove_node(p)
-
+    if len(shortest_path) is 2:
+        residual_graph.remove_edge(start_point_num,des_point_num)
 
     # For each edge e ∈G' Set c(e) := 0
     for s,t in residual_graph.edges():

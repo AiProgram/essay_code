@@ -297,7 +297,7 @@ def collect_data_folder(cur_csv_folder):
             #rec["lp_alg_result"]=0
             rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
             file_rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
-            if rec["new_alg_result"]>0 and rec["lp_alg_result"]>0 and rec["new_alg_result"]!=rec["lp_alg_result"]:
+            if rec["new_alg_result"]>0 and rec["lp_alg_result"]>0 and rec["new_alg_result"]==rec["lp_alg_result"]:
                 continue
             data.append(rec)
         writer.writeheader()

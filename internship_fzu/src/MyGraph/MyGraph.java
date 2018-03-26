@@ -26,6 +26,7 @@ public class MyGraph {
     public boolean directed=true;
     public GraphPath<Integer,DefaultWeightedEdge> shortestPath;//普通的起点到终点的最短路径，且是原图的
     public List<Integer>restrictedShortestPath;
+    public List<Integer>[]pathPair;//最后的最短路径对，暂时不用
 
     //方便在添加边的同时设置weight以及cost
     public DefaultWeightedEdge addNewEdge(int source ,int target,double weight,int cost){
