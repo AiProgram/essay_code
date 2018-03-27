@@ -16,6 +16,7 @@ import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.jgrapht.graph.WeightedMultigraph;
 
 import java.awt.*;
+import java.awt.geom.FlatteningPathIterator;
 import java.sql.Time;
 import java.util.*;
 import java.util.List;
@@ -117,24 +118,30 @@ public class NewAlg {
                 //当source是shortestPath中的点时
                 if(vList.contains(u)&&u!=startPoint&&u!=sinkPoint)
                 {
-                    int u2=+2*nodeNum;
-                    if(vList.contains(v)&&v!=startPoint&&v!=sinkPoint)
-                        v+=nodeNum;
-
-                    residualGraph.graph.addVertex(u2);
-                    residualGraph.graph.addVertex(v);
-                    residualGraph.addNewEdge(u2,v,w,0);
+                    int u2=u+2*nodeNum;
+                    if(vList.contains(v)&&v!=startPoint&&v!=sinkPoint){
+                        residualGraph.graph.addVertex(u2);
+                        residualGraph.graph.addVertex(v+nodeNum);
+                        residualGraph.addNewEdge(u2,v+nodeNum,w,0);
+                    }else{
+                        residualGraph.graph.addVertex(u2);
+                        residualGraph.graph.addVertex(v);
+                        residualGraph.addNewEdge(u2,v,w,0);
+                    }
                 }
                 //当target是shortestPath中的点时
                 if(vList.contains(v)&&v!=startPoint&&v!=sinkPoint)
                 {
                     int v1=v+nodeNum;
-                    if(vList.contains(u)&&u!=startPoint&&u!=sinkPoint)
-                        u+=2*nodeNum;
-
-                    residualGraph.graph.addVertex(u);
-                    residualGraph.graph.addVertex(v1);
-                    residualGraph.addNewEdge(u,v1,w,0);
+                    if(vList.contains(u)&&u!=startPoint&&u!=sinkPoint){
+                        residualGraph.graph.addVertex(u+2*nodeNum);
+                        residualGraph.graph.addVertex(v1);
+                        residualGraph.addNewEdge(u+2*nodeNum,v1,w,0);
+                    }else{
+                        residualGraph.graph.addVertex(u);
+                        residualGraph.graph.addVertex(v1);
+                        residualGraph.addNewEdge(u,v1,w,0);
+                    }
                 }
             }
         }
@@ -165,31 +172,43 @@ public class NewAlg {
         for(int mcv=0;mcv<maxComVertex+1;mcv++)
             dynMat[startPoint][mcv]=0;
 
+        boolean improveFlag=true;
         //主要算法
-        for(int mcv=1;mcv<maxComVertex+1;mcv++){
+        for(int mcv=1;mcv<maxComVertex+1;mcv++)
+        {
             vit=graph.vertexSet().iterator();
-            while(vit.hasNext()){
+            while(vit.hasNext())
+            {
                 int node=(int)vit.next();
                 dynMat[node][mcv]=dynMat[node][mcv-1];
                 pathMap[node][mcv]=node;
             }
-            eit=graph.edgeSet().iterator();
-            while(eit.hasNext()){
-                DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
-                int source=(int)graph.getEdgeSource(edge);
-                int target=(int)graph.getEdgeTarget(edge);
-                double weight= graph.getEdgeWeight(edge);
-                if(myGraph.costMap.get(edge)==0){
-                    if(dynMat[target][mcv]>=dynMat[source][mcv]+weight)
+            improveFlag=true;
+            while(improveFlag)
+            {
+                improveFlag=false;
+                eit = graph.edgeSet().iterator();
+                while (eit.hasNext())
+                {
+                    DefaultWeightedEdge edge = (DefaultWeightedEdge) eit.next();
+                    int source = (int) graph.getEdgeSource(edge);
+                    int target = (int) graph.getEdgeTarget(edge);
+                    double weight = graph.getEdgeWeight(edge);
+                    if (myGraph.costMap.get(edge) == 0)
                     {
-                        dynMat[target][mcv]=dynMat[source][mcv]+weight;
-                        pathMap[target][mcv]=source;
-                    }
-                }else if(myGraph.costMap.get(edge)==1){
-                    if(dynMat[target][mcv]>=dynMat[source][mcv-1]+weight)
+                        if (dynMat[target][mcv] > dynMat[source][mcv] + weight)
+                        {
+                            dynMat[target][mcv] = dynMat[source][mcv] + weight;
+                            pathMap[target][mcv] = source;
+                            improveFlag=true;
+                        }
+                    } else if (myGraph.costMap.get(edge) == 1)
                     {
-                        dynMat[target][mcv]=dynMat[source][mcv-1]+weight;
-                        pathMap[target][mcv]=source;
+                        if (dynMat[target][mcv] > dynMat[source][mcv - 1] + weight) {
+                            dynMat[target][mcv] = dynMat[source][mcv - 1] + weight;
+                            pathMap[target][mcv] = source;
+                            improveFlag=true;
+                        }
                     }
                 }
             }
@@ -203,16 +222,18 @@ public class NewAlg {
         String resultArr[][]=new String[time][CSVCol.colNum];//用于记录算法运行数据记录进入csv表格中
         long startTime;
         long endTime;
+        int scale=8;
 
         List<Integer> wrongList=new ArrayList<>();
+        List<Integer> wrongList2=new ArrayList<>();
         for(int t=0;t<time;t++) {
             GraphRandomGenerator randomGenerator = new GraphRandomGenerator();
 //            String jsonStr= JavaLPAlg.readJsonGraph("graph.json");
 //            MyGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
-            MyGraph myGraph=randomGenerator.generateRandomGraph(20,100);
+            MyGraph myGraph=randomGenerator.generateRandomGraph(40,400);
             myGraph.startPoint = 0;
-            myGraph.sinkPoint = 5;
-            myGraph.maxComVertex = 4;
+            myGraph.sinkPoint = 10;
+            myGraph.maxComVertex = 2;
 
             MyGraph graph=null;
             double newResult=-1;
@@ -259,9 +280,13 @@ public class NewAlg {
                 wrongList.add(t);
                 GraphWriter.saveGraphToJson(myGraph,t+".json");
             }
+            if(round(mwldResult)>round(ILPResult)){
+                wrongList2.add(t);
+            }
             System.out.print("\n\n");
         }
         System.out.println(wrongList);
+        System.out.println(wrongList2);
         CSVRecorder csvRecorder=new CSVRecorder();
         csvRecorder.writeToCSV("1.csv",resultArr);
     }

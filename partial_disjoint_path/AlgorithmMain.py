@@ -8,7 +8,7 @@ import sys
 import numpy as np
 import utilities as util
 INFINITY=sys.maxsize/10
-def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,SCALE=50):
+def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,SCALE=1):
     #find original shortest path
     node_num=0
     edge_num=0
@@ -34,6 +34,7 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
             residual_graph.remove_node(p)
     if len(shortest_path) is 2:
         residual_graph.remove_edge(start_point_num,des_point_num)
+        print("长度为2")
 
     # For each edge e ∈G' Set c(e) := 0
     for s,t in residual_graph.edges():
@@ -64,14 +65,16 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
             if shortest_path.count(u)>0 and u!=start_point_num and u!=des_point_num:
                 u2=u+2*node_num
                 if shortest_path.count(v)>0 and v!=start_point_num and v!=des_point_num:
-                    v+=node_num
-                residual_graph.add_edge(u2,v,weight=w,cost=0)
+                    residual_graph.add_edge(u2,v+node_num,weight=w,cost=0)
+                else:
+                    residual_graph.add_edge(u2,v,weight=w,cost=0)
             #v ∈ P∗ \ {s, t}
             if shortest_path.count(v)>0 and v!=start_point_num and v!=des_point_num:
                 v1=v+node_num
                 if shortest_path.count(u)>0 and u!=start_point_num and u!=des_point_num:
-                    u+=2*node_num
-                residual_graph.add_edge(u,v1,weight=w,cost=0)
+                    residual_graph.add_edge(u+2*node_num,v1,weight=w,cost=0)
+                else:
+                    residual_graph.add_edge(u,v1,weight=w,cost=0)
 
     if debug is True:
         plt.figure( figsize=(10,10),dpi=80)
@@ -105,21 +108,32 @@ def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,
                 dyn_mat[node][mcv]=INFINITY
     for mcv in range(max_com_vertex+1):
         dyn_mat[start_point_num][mcv]=0
-        
+    
+    
     #main algorithm    
     for mcv in range(1,max_com_vertex+1):
         for node in graph.nodes():
             dyn_mat[node][mcv]=dyn_mat[node][mcv-1]
             path_map[node][mcv]=node
-        for u,v in graph.edges():
-            if graph[u][v]["cost"]==0:
-                if dyn_mat[v][mcv]>=dyn_mat[u][mcv]+graph[u][v]["weight"]:
-                    dyn_mat[v][mcv]=dyn_mat[u][mcv]+graph[u][v]["weight"]
-                    path_map[v][mcv]=u
-            elif graph[u][v]["cost"]==1:
-                if dyn_mat[v][mcv]>=dyn_mat[u][mcv-1]+graph[u][v]["weight"]:
-                    dyn_mat[v][mcv]=dyn_mat[u][mcv-1]+graph[u][v]["weight"]
-                    path_map[v][mcv]=u 
+        improveFlag=True
+        time=0
+        while True:
+            time+=1
+            improveFlag=False
+            for u,v in graph.edges():
+                if graph[u][v]["cost"]==0:
+                    if dyn_mat[v][mcv]>dyn_mat[u][mcv]+graph[u][v]["weight"]:
+                        dyn_mat[v][mcv]=dyn_mat[u][mcv]+graph[u][v]["weight"]
+                        path_map[v][mcv]=u
+                        improveFlag=True
+                elif graph[u][v]["cost"]==1:
+                    if dyn_mat[v][mcv]>dyn_mat[u][mcv-1]+graph[u][v]["weight"]:
+                        dyn_mat[v][mcv]=dyn_mat[u][mcv-1]+graph[u][v]["weight"]
+                        path_map[v][mcv]=u
+                        improveFlag=True
+            if improveFlag is False:
+                break
+        print(time) 
 
     if debug==True:
         file=open("debug.txt","w+")

@@ -8,7 +8,7 @@ import time
 import math
 if __name__=="__main__":
     max_com_vertex=4
-    node_number=100
+    node_number=50
     #SCALE=int(math.sqrt(node_number))
     edge_number=int(math.pow(node_number,2)/10)
     start_point_num=0
