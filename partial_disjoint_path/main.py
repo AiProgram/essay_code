@@ -8,7 +8,7 @@ import time
 import math
 if __name__=="__main__":
     max_com_vertex=4
-    node_number=50
+    node_number=40
     #SCALE=int(math.sqrt(node_number))
     edge_number=int(math.pow(node_number,2)/10)
     start_point_num=0
@@ -16,4 +16,5 @@ if __name__=="__main__":
     repeate_time=1
     graph_num=100
     #util.generate_graph_group(node_number,edge_number,max_com_vertex,graph_num,start_point_num,des_point_num,repeate_time)
-    util.run_new_alg_group()
+    #util.run_new_alg_group()
+    util.run_mwld_group()

@@ -34,7 +34,6 @@ def get_residual_graph(start_point_num=0,des_point_num=0,graph=None,debug=False,
             residual_graph.remove_node(p)
     if len(shortest_path) is 2:
         residual_graph.remove_edge(start_point_num,des_point_num)
-        print("长度为2")
 
     # For each edge e ∈G' Set c(e) := 0
     for s,t in residual_graph.edges():
@@ -133,7 +132,7 @@ def RSP_no_recrusive(start_point_num,des_point_num,graph,dyn_mat,max_com_vertex,
                         improveFlag=True
             if improveFlag is False:
                 break
-        print(time) 
+        #print(time) 
 
     if debug==True:
         file=open("debug.txt","w+")
@@ -328,12 +327,13 @@ def get_graph_for_LP(graph,start_point_num,des_point_num,max_com_vertex):
 
 def mwld_alg(graph,start_point_num,des_point_num,max_com_vertex):
     """the main function of mwld algorithm"""
-    aux_graph=mwld_get_aux_graph(graph)
+    aux_graph=mwld_get_aux_graph(graph,des_point_num)
     #max common vertex is n means tha max common edge in aux_graph is n-1
     w,path=constrained_shortest_path(start_point_num,des_point_num,aux_graph,max_com_vertex-1)
     return w,path
 
 def get_SP_reverse_graph(graph,shortest_path):
+    """
     reverse_graph=copy.deepcopy(graph)
     for index in range(len(shortest_path)-1):
             point_u=shortest_path[index]
@@ -341,6 +341,59 @@ def get_SP_reverse_graph(graph,shortest_path):
             w=graph[point_u][point_v]["weight"]
             reverse_graph.remove_edge(point_u,point_v)
             reverse_graph.add_edge(point_v,point_u,weight=-w)
+    """
+    s=shortest_path[0]  #最短路径的起点以及终点
+    t=shortest_path[len(shortest_path)-1]
+
+    reverse_graph=nx.DiGraph()
+    for node in graph.nodes():
+        if node in shortest_path:#shortest_path的中间点拆掉
+            if node==s or node==t:
+                reverse_graph.add_node(node)
+            else:
+                v1=node+graph.number_of_nodes()
+                v2=node+2*graph.number_of_nodes()
+                reverse_graph.add_node(v1)
+                reverse_graph.add_node(v2)
+                reverse_graph.add_edge(v1,v2,weight=0,cost=0)#拆的点从1到2的边加上
+        else:
+            reverse_graph.add_node(node)#其他点也不拆
+            
+
+    shortest_path_edges=[]#收集shortest_path 中的边，以(u,v)形式储存在list中
+    for index in range(len(shortest_path)-1):
+        point_u=shortest_path[index]
+        point_v=shortest_path[index+1]
+        shortest_path_edges.append((point_u,point_v))
+
+    for u,v in graph.edges():#遍历原图中的边
+        w=graph[u][v]["weight"]
+        u1=u+graph.number_of_nodes()
+        v2=v+2*graph.number_of_nodes()
+        if (u,v)  not in shortest_path_edges:#遍历的边不在最短路径中
+            if u==s or u==t or u not in shortest_path:#不管在不在shortest_path中，s、t一律不拆,点没被拆过也不拆
+                new_u=u
+            else:
+                new_u=u1
+
+            if v==s or v==t or v not in shortest_path:
+                new_v=v
+            else:
+                new_v=v2
+            reverse_graph.add_edge(new_u,new_v,weight=w)
+        else:
+            #这里也要特别处理s,t,但是u不会为t，v不会为s
+            if u==s:
+                new_u=s
+            else:
+                new_u=u1
+
+            if v==t:
+                new_v=t
+            else:
+                new_v=v2
+            reverse_graph.add_edge(new_v,new_u,weight=-w)
+    
     return reverse_graph
 
 def mwld_path_xor(path_p,path_q):
@@ -368,31 +421,10 @@ def mwld_path_xor(path_p,path_q):
         if (path_p[index],path_p[index+1]) not in edge_shared:
             path_graph.add_edge(path_p[index],path_p[index+1])
     
-    
-    s=path_p[0]
-    #Because there is no common edge, we know that the two neighbours of the starting point are not the same.
-    s_succ=list(path_graph.successors(s))
-    
-
-    path_p1.append(s)
-    now=s_succ[0]
-    path_p1.append(now)
-    tmp=list(path_graph.successors(now))
-    while len(tmp)>0:
-        now=tmp[0]
-        path_p1.append(now)
-        tmp=list(path_graph.successors(now))
-
-    path_p2.append(s)
-    now=s_succ[1]
-    path_p2.append(now)
-    tmp=list(path_graph.successors(now))
-    while len(tmp)>0:
-        now=tmp[0]
-        path_p2.append(now)
-        tmp=list(path_graph.successors(now))
-
-    return path_p1,path_p2
+    path_list=[]
+    for path in nx.all_simple_paths(path_graph,path_p[0],path_p[len(path_p)-1]):
+        path_list.append(path)
+    return path_list[0],path_list[1]
 
 def mwld_get_aux_graph_edge(graph,point_s,point_t):
     """Get the edges between two points in the auxiliary graph for mwld alogrithm"""
@@ -411,6 +443,16 @@ def mwld_get_aux_graph_edge(graph,point_s,point_t):
     if path_q is None:
         return 0,None,None
     del reverse_graph
+    
+    tmp=[]#因为reverse_graph有拆点，这里处理拆过的点
+    for node in path_q:
+        if node>=2*graph.number_of_nodes():
+            tmp.append(node-2*graph.number_of_nodes())
+        elif node>=graph.number_of_nodes():
+            tmp.append(node-graph.number_of_nodes())
+        else:
+            tmp.append(node)
+    path_q=tmp
 
     path_p1,path_p2=mwld_path_xor(path_p,path_q)
     #print("P: "+str(path_p)+"  Q: "+str(path_q))
@@ -420,7 +462,7 @@ def mwld_get_aux_graph_edge(graph,point_s,point_t):
     w_sum=w_p1+w_p2
     return w_sum,path_p1,path_p2
 
-def mwld_get_aux_graph(graph):
+def mwld_get_aux_graph(graph,des_point_num):
     """Get an auxiliary graph for mwld algorithm"""
     aux_graph=nx.DiGraph()
     for node in graph.nodes():
@@ -435,5 +477,8 @@ def mwld_get_aux_graph(graph):
                 if path_p1==None or path_p2==None:
                     continue
                 else:
-                    aux_graph.add_edge(point_s,point_t,weight=w_sum,cost=1)
+                    if point_t is des_point_num:
+                        aux_graph.add_edge(point_s,point_t,weight=w_sum,cost=0)
+                    else:
+                        aux_graph.add_edge(point_s,point_t,weight=w_sum,cost=1)
     return aux_graph

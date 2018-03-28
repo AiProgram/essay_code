@@ -166,7 +166,7 @@ def run_new_alg_dir(cur_folder_path,SCALE=1):
                     dist,pathQ=am.constrained_shortest_path(start_point_num,des_point_num,residual_graph,max_com_vertex)
                     rec_file["new_alg_result"]=dist+get_SP_weight(graph,path_P)
                 except BaseException as e:
-                    print(format(e))
+                    print("error"+format(e))
                 time_end=time.time()
                 time_sum+=(time_end-time_start)
             time_sum=time_sum/repeate_time
@@ -182,10 +182,17 @@ def run_new_alg_dir(cur_folder_path,SCALE=1):
     json.dump(rec_object,con_file)
     con_file.close()
 
-
 def run_mwld_group():
-    """run mwld algorithm on graphs in the folder in batch"""
+    """run new algorithm on graphs in the big folder which has many samll folders"""
     os.chdir(os.path.dirname(__file__)+graph_data_folder)
+    folders=os.listdir(os.path.dirname(__file__)+graph_data_folder)
+    for folder in folders:
+        if os.path.isdir(folder):
+            run_mwld_dir(folder)
+
+def run_mwld_dir(cur_folder_path):
+    """run mwld algorithm on graphs in the folder in batch"""
+    os.chdir(cur_folder_path)
     con_file=open("data.json","r")
     rec_object=json.load(con_file)
     con_file.close()
@@ -202,7 +209,8 @@ def run_mwld_group():
 
     time_all=0
     for rec_file in file_Rec_Arr:
-        if rec_file["mwld_alg_complete"] is True:
+        #if rec_file["mwld_alg_complete"] is True:
+        if False:
             time_all+=rec_file["mwld_alg_run_time"]
         else:
             origin_graph_file=rec_file["origin_graph_file"]
@@ -297,7 +305,8 @@ def collect_data_folder(cur_csv_folder):
             #rec["lp_alg_result"]=0
             rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
             file_rec["lp_alg_result"]=get_result_from_sol(sol_file_name)
-            if rec["new_alg_result"]>0 and rec["lp_alg_result"]>0 and rec["new_alg_result"]==rec["lp_alg_result"]:
+            #if rec["mwld_alg_result"]==rec["lp_alg_result"] and rec["new_alg_result"]==rec["lp_alg_result"]:
+            if rec["lp_alg_result"]==0:
                 continue
             data.append(rec)
         writer.writeheader()
