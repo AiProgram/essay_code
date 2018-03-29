@@ -5,6 +5,7 @@ import java.util.*;
 
 import Alg.NewAlg.NewAlg;
 import GraphIO.GraphRandomGenerator;
+import MyGraph.*;
 import MyGraph.MyGraph;
 import org.gnu.glpk.*;
 import org.jgrapht.graph.*;
@@ -12,10 +13,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jgrapht.*;
 
+import javax.xml.stream.FactoryConfigurationError;
+
 public class JavaLPAlg {
 
     Map<DefaultWeightedEdge,Integer> costMap=new HashMap<>();
-
     public static String readJsonGraph(String fileName)
     {
         String graphData=null;
@@ -61,7 +63,7 @@ public class JavaLPAlg {
 
 
         MyGraph myGraph=new MyGraph();
-        DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> graph=new DirectedWeightedMultigraph<Integer, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+        DefaultDirectedWeightedGraph<Integer,DefaultWeightedEdge> graph=new DefaultDirectedWeightedGraph<>(DefaultWeightedEdge.class);
         myGraph.graph=graph;
         myGraph.costMap=new HashMap<>();
         int nodeNumber=nodesArr.length();
@@ -110,7 +112,7 @@ public class JavaLPAlg {
         return myGraph;
     }
 
-    public static double solveWithGLPK(MyGraph myGraph){
+    public static double solveWithGLPK(ILPGraph myGraph,int probId){
         glp_prob lp;
         glp_smcp parm;
         SWIGTYPE_p_int index;
@@ -123,6 +125,8 @@ public class JavaLPAlg {
         int startPoint=myGraph.startPoint;
         int sinkPoint=myGraph.sinkPoint;
         int bound=myGraph.maxComVertex;
+        List<Integer>vertexList=new ArrayList<>(myGraph.graph.vertexSet());
+        List<DefaultWeightedEdge>edgeList=new ArrayList<>(myGraph.graph.edgeSet());
 
         System.out.println(edgeNumber+"  "+nodeNumber);
 
@@ -138,7 +142,8 @@ public class JavaLPAlg {
             GLPK.glp_add_cols(lp, edgeNumber);
             for(int i=1;i<=edgeNumber;i++)
             {
-                GLPK.glp_set_col_kind(lp,i,GLPKConstants.GLP_BV);
+                GLPK.glp_set_col_kind(lp,i,GLPKConstants.GLP_IV);
+                GLPK.glp_set_col_bnds(lp,i,GLPKConstants.GLP_DB,0,1);
                 GLPK.glp_set_col_name(lp,i,"x"+i);
             }
 
@@ -161,13 +166,13 @@ public class JavaLPAlg {
                 GLPK.glp_set_row_name(lp,j,"c"+j);
 
                 //int node=graph.nodes[i-1];
-                int node=(int)vit.next();
+                int node=vertexList.get(i-1);
                 if(node== sinkPoint) continue;
                 Iterator eit=graph.edgeSet().iterator();
                 for(int k=1;k<=edgeNumber;k++)
                 {
                     //MyEdge edge=graph.edge.get(k-1);
-                    DefaultWeightedEdge edge=(DefaultWeightedEdge) eit.next();
+                    DefaultWeightedEdge edge=edgeList.get(k-1);
                     if((int)graph.getEdgeSource(edge)==node)
                     {
                         a=1;
@@ -198,7 +203,7 @@ public class JavaLPAlg {
             {
                 GLPK.intArray_setitem(index,k,k);
                 //Edge edge=graph.edges.get(k-1);
-                DefaultWeightedEdge edge=(DefaultWeightedEdge) eit.next();
+                DefaultWeightedEdge edge=edgeList.get(k-1);
                 GLPK.doubleArray_setitem(val,k,costMap.get(edge));
             }
             GLPK.glp_set_mat_row(lp,nodeNumber,edgeNumber,index,val);
@@ -214,7 +219,7 @@ public class JavaLPAlg {
             for(int i=1;i<=edgeNumber;i++)
             {
                 //Edge edge=graph.edges.get(i);
-                DefaultWeightedEdge edge=(DefaultWeightedEdge) eit.next();
+                DefaultWeightedEdge edge=edgeList.get(i-1);
                 GLPK.glp_set_obj_coef(lp, i, graph.getEdgeWeight(edge));
             }
 
@@ -222,15 +227,18 @@ public class JavaLPAlg {
             parm = new glp_smcp();
             GLPK.glp_init_smcp(parm);
             ret = GLPK.glp_simplex(lp, parm);
-//            GLPK.glp_write_sol(lp,"sol.sol");
-//
-//            glp_cpxcp p=new glp_cpxcp();
-//            GLPK.glp_init_cpxcp(p);
-//            GLPK.glp_write_lp(lp,p,"lp.lp");
+//            if(this.isTest) {//测试时输出文件使用
+//                GLPK.glp_write_sol(lp, probId + ".sol");
+//                glp_cpxcp p = new glp_cpxcp();
+//                GLPK.glp_init_cpxcp(p);
+//                GLPK.glp_write_lp(lp, p, probId + ".lp");
+//            }
 
             // 获得结果
             if (ret == 0) {
                 result=write_lp_solution(lp);
+                if(GLPK.glp_get_status(lp)!=GLPKConstants.GLP_OPT)//问题运行成功但是没有达到要求
+                    return 0;//0表示没有结果，因为实际情况不会为0
             } else {
                 System.out.println("The problem could not be solved");
                 return -1;
@@ -256,13 +264,13 @@ public class JavaLPAlg {
      *
      * @return G'
      */
-    public  static MyGraph getGraphForILP(MyGraph myGraph)
+    public  static ILPGraph getGraphForILP(MyGraph myGraph)
     {
         int startPoint =myGraph.startPoint;
         int sinkPoint =myGraph.sinkPoint;
         int bound=myGraph.maxComVertex;
 
-        MyGraph lpGraph=new MyGraph();
+        ILPGraph lpGraph=new ILPGraph();
         lpGraph.startPoint=startPoint;
         lpGraph.sinkPoint=sinkPoint;
         lpGraph.maxComVertex=bound;
@@ -353,10 +361,10 @@ public class JavaLPAlg {
 //        System.out.println(newGraph.graph.vertexSet().size());
 //        System.out.println(newGraph.graph.edgeSet().size());
 
-        MyGraph lpGraph=getGraphForILP(newGraph);
+        ILPGraph lpGraph=getGraphForILP(newGraph);
         System.out.println(lpGraph.graph.vertexSet().size());
         System.out.println(lpGraph.graph.edgeSet().size());
-        solveWithGLPK(lpGraph);
+        solveWithGLPK(lpGraph,0);
     }
 
     public static  void main(String args[]){

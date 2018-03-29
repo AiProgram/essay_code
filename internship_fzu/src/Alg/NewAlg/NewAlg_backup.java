@@ -7,9 +7,10 @@ import GraphIO.CSVCol;
 import GraphIO.CSVRecorder;
 import GraphIO.GraphRandomGenerator;
 import GraphIO.GraphWriter;
-import MyGraph.MyGraph;
+import MyGraph.*;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 
@@ -47,7 +48,7 @@ public class NewAlg_backup {
         //首先复制G到G‘中
         MyGraph residualGraph=new MyGraph();
         residualGraph.costMap=new HashMap<>();
-        residualGraph.graph=new DirectedWeightedMultigraph(DefaultWeightedEdge.class);
+        residualGraph.graph=new DefaultDirectedWeightedGraph(DefaultWeightedEdge.class);
         residualGraph.maxComVertex=myGraph.maxComVertex;
         residualGraph.startPoint=myGraph.startPoint;
         residualGraph.sinkPoint=myGraph.sinkPoint;
@@ -140,7 +141,7 @@ public class NewAlg_backup {
         int startPoint=myGraph.startPoint;
         int sinkPoint=myGraph.sinkPoint;
         int maxComVertex=myGraph.maxComVertex;
-        DirectedWeightedMultigraph graph=myGraph.graph;
+        DefaultDirectedWeightedGraph graph=myGraph.graph;
         int nodeNum=graph.vertexSet().size();
         int pathMap[][]=new int[nodeNum*3][maxComVertex+1];
         double dynMat[][]=new double[nodeNum*3][maxComVertex+1];
@@ -308,8 +309,8 @@ public class NewAlg_backup {
             System.out.println("newResult  "+newResult);
 
             startTime=System.currentTimeMillis();
-            MyGraph graph1 = JavaLPAlg.getGraphForILP(myGraph);
-            double ILPResult=JavaLPAlg.solveWithGLPK(graph1);
+            ILPGraph graph1 = JavaLPAlg.getGraphForILP(myGraph);
+            double ILPResult=JavaLPAlg.solveWithGLPK(graph1,0);
             endTime=System.currentTimeMillis();
             long ILPRunTime=endTime-startTime;
 //

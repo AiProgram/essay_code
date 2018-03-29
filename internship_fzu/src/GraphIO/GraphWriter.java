@@ -23,11 +23,14 @@ public class GraphWriter {
             FileWriter fileWriter = new FileWriter(new File(graphFolder + graphFileName));
             JSONObject jsonObject=new JSONObject();//整个json文件的json对象
 
+
             //加入整个图的附加属性
             JSONObject attrObject=new JSONObject();
             attrObject.put("S",myGraph.startPoint);
             attrObject.put("T",myGraph.sinkPoint);
             jsonObject.put("graph",attrObject);
+            jsonObject.put("multigraph",myGraph.multiGraph);
+            jsonObject.put("directed",true);
 
             //储存图的顶点
             JSONArray nodeArrObject=new JSONArray();

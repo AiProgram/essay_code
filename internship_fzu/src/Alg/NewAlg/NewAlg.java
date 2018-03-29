@@ -6,11 +6,12 @@ import GraphIO.CSVCol;
 import GraphIO.CSVRecorder;
 import GraphIO.GraphRandomGenerator;
 import GraphIO.GraphWriter;
-import MyGraph.MyGraph;
+import MyGraph.*;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.jgrapht.graph.WeightedMultigraph;
@@ -55,7 +56,7 @@ public class NewAlg {
         //首先复制G到G‘中
         MyGraph residualGraph=new MyGraph();
         residualGraph.costMap=new HashMap<>();
-        residualGraph.graph=new DirectedWeightedMultigraph(DefaultWeightedEdge.class);
+        residualGraph.graph=new DefaultDirectedWeightedGraph(DefaultWeightedEdge.class);
         residualGraph.maxComVertex=myGraph.maxComVertex;
         residualGraph.startPoint=myGraph.startPoint;
         residualGraph.sinkPoint=myGraph.sinkPoint;
@@ -154,7 +155,7 @@ public class NewAlg {
         int startPoint=myGraph.startPoint;
         int sinkPoint=myGraph.sinkPoint;
         int maxComVertex=myGraph.maxComVertex;
-        DirectedWeightedMultigraph graph=myGraph.graph;
+        DefaultDirectedWeightedGraph graph=myGraph.graph;
         int nodeNum=graph.vertexSet().size();
         int pathMap[][]=new int[nodeNum*3][maxComVertex+1];
         double dynMat[][]=new double[nodeNum*3][maxComVertex+1];
@@ -184,8 +185,10 @@ public class NewAlg {
                 pathMap[node][mcv]=node;
             }
             improveFlag=true;
+            int time=0;
             while(improveFlag)
             {
+                time++;
                 improveFlag=false;
                 eit = graph.edgeSet().iterator();
                 while (eit.hasNext())
@@ -230,10 +233,10 @@ public class NewAlg {
             GraphRandomGenerator randomGenerator = new GraphRandomGenerator();
 //            String jsonStr= JavaLPAlg.readJsonGraph("graph.json");
 //            MyGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
-            MyGraph myGraph=randomGenerator.generateRandomGraph(40,400);
+            MyGraph myGraph=randomGenerator.generateRandomGraph(40,160);
             myGraph.startPoint = 0;
             myGraph.sinkPoint = 10;
-            myGraph.maxComVertex = 2;
+            myGraph.maxComVertex = 4;
 
             MyGraph graph=null;
             double newResult=-1;
@@ -250,8 +253,8 @@ public class NewAlg {
             long newRunTime=endTime-startTime;
 
             startTime=System.currentTimeMillis();
-            MyGraph graph1 = JavaLPAlg.getGraphForILP(myGraph);
-            double ILPResult=JavaLPAlg.solveWithGLPK(graph1);
+            ILPGraph graph1 = JavaLPAlg.getGraphForILP(myGraph);
+            double ILPResult=JavaLPAlg.solveWithGLPK(graph1,t);
             endTime=System.currentTimeMillis();
             long ILPRunTime=endTime-startTime;
 
@@ -260,7 +263,7 @@ public class NewAlg {
             endTime=System.currentTimeMillis();
             long mwldRunTime=endTime-startTime;
 
-//            GraphWriter.saveGraphToJson(myGraph,"graph.json");
+            GraphWriter.saveGraphToJson(myGraph,t+".json");
 
             resultArr[t][CSVCol.graphId]=Integer.toString(t);
             resultArr[t][CSVCol.startPoint]=Integer.toString(myGraph.startPoint);
@@ -276,11 +279,11 @@ public class NewAlg {
             resultArr[t][CSVCol.newAlgResult]=Double.toString(newResult);
             resultArr[t][CSVCol.newAlgRunTime]=Long.toString(newRunTime);
 
-            if(round(newResult)>round(ILPResult)) {
+            if(round(newResult)>round(ILPResult)&&round(ILPResult)!=0) {
                 wrongList.add(t);
                 GraphWriter.saveGraphToJson(myGraph,t+".json");
             }
-            if(round(mwldResult)>round(ILPResult)){
+            if(round(mwldResult)>round(ILPResult)&&round(ILPResult)!=0){
                 wrongList2.add(t);
             }
             System.out.print("\n\n");

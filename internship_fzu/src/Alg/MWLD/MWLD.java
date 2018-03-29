@@ -3,27 +3,27 @@ package Alg.MWLD;
 import Alg.NewAlg.NewAlg;
 import Alg.Util.Util;
 import MyGraph.MyGraph;
+import org.jgraph.JGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
+import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.DirectedMultigraph;
-import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.jgrapht.graph.*;
 
 import java.util.*;
 
 public class MWLD {
     public static  double mwldALg(MyGraph myGraph){
-        MyGraph auxGraph=mwldGetAuxGraph(myGraph.graph);
+        MyGraph auxGraph=mwldGetAuxGraph(myGraph.graph,myGraph.sinkPoint);
         auxGraph.startPoint=myGraph.startPoint;
         auxGraph.sinkPoint=myGraph.sinkPoint;
-        auxGraph.maxComVertex=myGraph.maxComVertex;
+        auxGraph.maxComVertex=myGraph.maxComVertex-1;
         return NewAlg.RSPNoRecrusive(auxGraph);
     }
 
-    public static MyGraph mwldGetAuxGraph(DirectedWeightedMultigraph graph){
+    public static MyGraph mwldGetAuxGraph(DefaultDirectedWeightedGraph graph,int sinkPoint){
         MyGraph auxGraph=new MyGraph();
-        auxGraph.graph=new DirectedWeightedMultigraph(DefaultWeightedEdge.class);
+        auxGraph.graph=new DefaultDirectedWeightedGraph(DefaultWeightedEdge.class);
         auxGraph.costMap=new HashMap<>();
 
         Iterator vit=graph.vertexSet().iterator();
@@ -47,7 +47,9 @@ public class MWLD {
                     if(paths==null) continue;
                     else{
                         double wSum=Util.getSPWeight(graph,paths[0])+Util.getSPWeight(graph,paths[1]);
-                        auxGraph.addNewEdge(pointS,pointT,wSum,1);
+                        if(pointT == sinkPoint)
+                        auxGraph.addNewEdge(pointS,pointT,wSum,0);
+                        else auxGraph.addNewEdge(pointS,pointT,wSum,1);
                     }
                 }
             }
@@ -58,7 +60,7 @@ public class MWLD {
     public static List<Integer>[] mwldPathXor(List<Integer> pathP,List<Integer>pathQ){
         List<Integer>pathP1=new ArrayList<>();
         List<Integer>pathP2=new ArrayList<>();
-        DirectedMultigraph<Integer,DefaultEdge>graph=new DirectedMultigraph<>(DefaultEdge.class);
+        DefaultDirectedGraph<Integer,DefaultEdge> graph=new DefaultDirectedGraph<Integer, DefaultEdge>(DefaultEdge.class);
         Iterator vit=pathP.iterator();
 
         while (vit.hasNext())
@@ -95,35 +97,17 @@ public class MWLD {
         }
 
         int s=pathP.get(0);
-        List<DefaultEdge> s_succ=new ArrayList<>(graph.outgoingEdgesOf(s));
-
-        pathP1.add(s);
-        int now=graph.getEdgeTarget(s_succ.get(0));
-        pathP1.add(now);
-        List<DefaultEdge> tmp=new ArrayList<>(graph.outgoingEdgesOf(now));
-        while(tmp.size()>0){
-            now=graph.getEdgeTarget(tmp.get(0));
-            pathP1.add(now);
-            tmp=new ArrayList<>(graph.outgoingEdgesOf(now));
-        }
-
-        pathP2.add(s);
-        now=graph.getEdgeTarget(s_succ.get(1));
-        pathP2.add(now);
-        tmp=new ArrayList<>(graph.outgoingEdgesOf(now));
-        while(tmp.size()>0){
-            now=graph.getEdgeTarget(tmp.get(0));
-            pathP2.add(now);
-            tmp=new ArrayList<>(graph.outgoingEdgesOf(now));
-        }
-
+        int t=pathP.get(pathP.size()-1);
+        AllDirectedPaths<Integer,DefaultEdge> allDirectedPaths=new AllDirectedPaths<>(graph);
+        List<GraphPath<Integer,DefaultEdge>> pathList=allDirectedPaths.getAllPaths(s,t,true,null);
         List<Integer> result[]=new List[2];
-        result[0]=pathP1;
-        result[1]=pathP2;
+        result[0]=pathList.get(0).getVertexList();
+        result[1]=pathList.get(1).getVertexList();
         return result;
     }
-    public static List<Integer>[] mwldGetAuxGraphEdge(DirectedWeightedMultigraph graph,int pointS,int pointT)
+    public static List<Integer>[] mwldGetAuxGraphEdge(DefaultDirectedGraph graph,int pointS,int pointT)
     {
+        int nodeNum=graph.vertexSet().size();
         List<Integer> pathP;
         try{
             BellmanFordShortestPath<Integer,DefaultWeightedEdge> shortestPath=new BellmanFordShortestPath<>(graph);
@@ -142,47 +126,96 @@ public class MWLD {
             return null;
         }
 
+        List<Integer>tmp=new ArrayList<>();
+        for(int index=0;index<pathQ.size();index++)
+        {
+            int node=pathQ.get(index);
+            if(node>=2*nodeNum)
+                tmp.add(node-2*nodeNum);
+            else if(node>=nodeNum)
+                tmp.add(node-nodeNum);
+            else
+                tmp.add(node);
+        }
+        pathQ=tmp;
+
         List<Integer>paths[]=mwldPathXor(pathP,pathQ);
         return paths;//获取两条路径weight之和的工作可以放在外面
     }
 
-    public static DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> getSPReverseGraph(DirectedWeightedMultigraph graph,List<Integer> shortestPath)
+    public static DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> getSPReverseGraph(DefaultDirectedGraph graph,List<Integer> shortestPath)
     {
-        DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> reverseGraph=new DirectedWeightedMultigraph(DefaultWeightedEdge.class);
-        Iterator vit;
-        Iterator eit;
+        int s=shortestPath.get(0);
+        int t=shortestPath.get(shortestPath.size()-1);
+        List<Integer> oriVertexList=new ArrayList<>(graph.vertexSet());
+        List<DefaultWeightedEdge> oriEdgeList=new ArrayList<>(graph.edgeSet());
+        int nodeNum=oriVertexList.size();
+        int edgeNum=oriEdgeList.size();
 
-        //首先将graph复制到reverseGraph中去
-        vit=graph.vertexSet().iterator();
-        while(vit.hasNext())
+        DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> reverseGraph=new DirectedWeightedMultigraph<>(DefaultWeightedEdge.class);
+        for(int index=0;index<oriVertexList.size();index++)
         {
-            int node=(int)vit.next();
-            reverseGraph.addVertex(node);
+            int node=oriVertexList.get(index);
+            if(shortestPath.contains(node))
+            {
+                if(node==s || node==t)
+                    reverseGraph.addVertex(node);
+                else{
+                    int v1=node+nodeNum;
+                    int v2=node+2*nodeNum;
+                    reverseGraph.addVertex(v1);
+                    reverseGraph.addVertex(v2);
+                    DefaultWeightedEdge edge=reverseGraph.getEdgeFactory().createEdge(v1,v2);
+                    reverseGraph.addEdge(v1,v2,edge);
+                    reverseGraph.setEdgeWeight(edge,0);
+                }
+            }else{
+                reverseGraph.addVertex(node);
+            }
         }
 
-        eit=graph.edgeSet().iterator();
-        while(eit.hasNext())
+        for(int i=0;i<oriEdgeList.size();i++)
         {
-            DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
+            DefaultWeightedEdge edge=oriEdgeList.get(i);
             double w=graph.getEdgeWeight(edge);
-            int source=(int)graph.getEdgeSource(edge);
-            int target=(int)graph.getEdgeTarget(edge);
+            int u=(int)graph.getEdgeSource(edge);
+            int v=(int)graph.getEdgeTarget(edge);
+            int u1=u+nodeNum;
+            int v2=v+2*nodeNum;
 
-            DefaultWeightedEdge newEdge=reverseGraph.getEdgeFactory().createEdge(source,target);
-            reverseGraph.addEdge(source,target,newEdge);
-            reverseGraph.setEdgeWeight(newEdge,w);
-        }
+            if(shortestPath.contains(u)&&shortestPath.contains(v)&&shortestPath.indexOf(v)-shortestPath.indexOf(u)==1)
+            {
+            //边(u,v)在shortestPath中
+                int newU;
+                int newV;
+                if(u==s)
+                    newU=s;
+                else
+                    newU=u1;
 
-        for(int index=0;index<shortestPath.size()-1;index++)
-        {
-            int pointU=shortestPath.get(index);
-            int pointV=shortestPath.get(index+1);
-            double w=graph.getEdgeWeight(graph.getEdge(pointU,pointV));
-            reverseGraph.removeEdge(pointU,pointV);
+                if(v==t)
+                    newV=t;
+                else
+                    newV=v2;
+                DefaultWeightedEdge newEdge=reverseGraph.getEdgeFactory().createEdge(newV,newU);
+                reverseGraph.addEdge(newV,newU,newEdge);
+                reverseGraph.setEdgeWeight(newEdge,-w);
+            }else{
+                int newU;
+                int newV;
+                if(u==s||u==t||(!shortestPath.contains(u)))
+                    newU=u;
+                else
+                    newU=u1;
 
-            DefaultWeightedEdge edge=reverseGraph.getEdgeFactory().createEdge(pointV,pointU);
-            reverseGraph.addEdge(pointV,pointU);
-            reverseGraph.setEdgeWeight(edge,-w);
+                if(v==s||v==t||(!shortestPath.contains(v)))
+                    newV=v;
+                else
+                    newV=v2;
+                DefaultWeightedEdge newEdge=reverseGraph.getEdgeFactory().createEdge(newU,newV);
+                reverseGraph.addEdge(newU,newV,newEdge);
+                reverseGraph.setEdgeWeight(newEdge,w);
+            }
         }
         return reverseGraph;
     }
