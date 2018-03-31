@@ -7,12 +7,12 @@ import GraphIO.CSVCol;
 import GraphIO.CSVRecorder;
 import GraphIO.GraphRandomGenerator;
 import GraphIO.GraphWriter;
-import MyGraph.*;
+import MyGraph.ILPGraph;
+import MyGraph.MyGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.DirectedWeightedMultigraph;
 
 import java.util.*;
 

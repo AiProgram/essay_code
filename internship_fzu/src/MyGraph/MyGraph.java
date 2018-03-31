@@ -1,9 +1,9 @@
 package MyGraph;
 
 import org.jgrapht.GraphPath;
-import org.jgrapht.graph.*;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

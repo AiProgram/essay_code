@@ -2,11 +2,6 @@ package GraphIO;
 
 import com.csvreader.CsvWriter;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.util.List;
-import java.util.Map;
-
 public class CSVRecorder {
     private String csvPath="./csv_result/";
     public void writeToCSV(String csvFileName, String data[][]){

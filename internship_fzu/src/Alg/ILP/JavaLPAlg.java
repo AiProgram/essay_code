@@ -1,19 +1,19 @@
 package Alg.ILP;
 
-import java.io.*;
-import java.util.*;
-
-import Alg.NewAlg.NewAlg;
-import GraphIO.GraphRandomGenerator;
-import MyGraph.*;
+import MyGraph.ILPGraph;
 import MyGraph.MyGraph;
 import org.gnu.glpk.*;
-import org.jgrapht.graph.*;
+import org.jgrapht.EdgeFactory;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.jgrapht.*;
 
-import javax.xml.stream.FactoryConfigurationError;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.*;
 
 public class JavaLPAlg {
 

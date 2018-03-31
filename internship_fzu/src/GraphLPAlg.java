@@ -1,10 +1,10 @@
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-
 import Alg.ILP.JavaLPAlg;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GraphLPAlg {
     private class Edge

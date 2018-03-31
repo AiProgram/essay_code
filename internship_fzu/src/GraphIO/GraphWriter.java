@@ -8,7 +8,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.Iterator;
-import java.util.List;
 
 public class GraphWriter {
     public static String graphFolder="./graph_data/";

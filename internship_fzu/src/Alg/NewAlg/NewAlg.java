@@ -6,23 +6,18 @@ import GraphIO.CSVCol;
 import GraphIO.CSVRecorder;
 import GraphIO.GraphRandomGenerator;
 import GraphIO.GraphWriter;
-import MyGraph.*;
-import org.jgrapht.Graph;
+import MyGraph.ILPGraph;
+import MyGraph.MyGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.DirectedWeightedMultigraph;
-import org.jgrapht.graph.WeightedMultigraph;
 
-import java.awt.*;
-import java.awt.geom.FlatteningPathIterator;
-import java.sql.Time;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
-import static Alg.ILP.JavaLPAlg.parseJsonToGraph;
 import static Alg.Util.Util.getSPWeight;
 import static java.lang.StrictMath.round;
 
@@ -221,11 +216,10 @@ public class NewAlg {
 
 
     public static void main(String args[]){
-        int time=100;
+        int time=1;
         String resultArr[][]=new String[time][CSVCol.colNum];//用于记录算法运行数据记录进入csv表格中
         long startTime;
         long endTime;
-        int scale=8;
 
         List<Integer> wrongList=new ArrayList<>();
         List<Integer> wrongList2=new ArrayList<>();
@@ -233,7 +227,7 @@ public class NewAlg {
             GraphRandomGenerator randomGenerator = new GraphRandomGenerator();
 //            String jsonStr= JavaLPAlg.readJsonGraph("graph.json");
 //            MyGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
-            MyGraph myGraph=randomGenerator.generateRandomGraph(40,160);
+            MyGraph myGraph=randomGenerator.generateRandomGraph(20,40);
             myGraph.startPoint = 0;
             myGraph.sinkPoint = 10;
             myGraph.maxComVertex = 4;
