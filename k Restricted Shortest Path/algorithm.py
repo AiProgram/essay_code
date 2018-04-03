@@ -1,5 +1,36 @@
 import networkx as nx
 import copy
+import math
+def paths_xor(paths,pathP):
+    """求k条路径时，没加入一条路径，处理一次,因为pathP中会有反向边"""
+    start_point=pathP[0]
+    des_point=pathP[len(pathP)-1]
+    graph=nx.DiGraph()
+    for path in paths:
+        for index in range(len(path)-1):
+            u=path[index]
+            v=path[index+1]
+            graph.add_edge(u,v)
+    for index in range(len(pathP)-1):
+        u=pathP[index]
+        v=pathP[index+1]
+        if graph.has_edge(v,u):
+            graph.remove_edge(v,u)
+        else:
+            graph.add_edge(u,v)
+    
+    #一次性输出的simple path 可能会有边相交，所以生成一条以后删除该条的边继续生成
+    tmp=[]
+    while graph.number_of_edges()>0:
+        for path in nx.all_simple_paths(graph,start_point,des_point):
+            tmp.append(path)
+            for index in range(len(path)-1):
+                u=path[index]
+                v=path[index+1]
+                graph.remove_edge(u,v)#每一次只取一条，然后删边防止重复
+            break
+    return tmp
+
 def get_cost_reverse_graph(graph,paths):
     """将图中的所有相关路径反向，并且只有cost取反,默认不修改原图"""
     reverse_graph=copy.deepcopy(graph)
@@ -21,11 +52,14 @@ def get_ksp_with_cost(graph,start_point,des_point,sp_num):
     all_sp=[]
     cur_sp_num=0
     while(cur_sp_num<sp_num):
-        sp=nx.bellman_ford_path(aux_graph,start_point,des_point,weight="cost")
+        try:
+            sp=nx.bellman_ford_path(aux_graph,start_point,des_point,weight="cost")
+        except:
+            return None
         if sp is None:
             return None
         else:
-            all_sp.append(sp)
+            all_sp=paths_xor(all_sp,sp)
             cur_sp_num+=1
         aux_graph=get_cost_reverse_graph(graph,all_sp)
     return all_sp
@@ -38,6 +72,9 @@ def get_delay_reverse_graph(graph,paths):
         for index in range(len(path)-1):
             u=path[index]
             v=path[index+1]
+            if not reverse_graph.has_edge(u,v):
+                print("没有边:  "+str(u)+"---->"+str(v))
+                print("当前paths  "+str(paths))
             cost=graph[u][v]["cost"]
             delay=graph[u][v]["delay"]
             reverse_graph.remove_edge(u,v)
@@ -51,11 +88,14 @@ def get_ksp_with_delay(graph,start_point,des_point,sp_num):
     all_sp=[]
     cur_sp_num=0
     while(cur_sp_num<sp_num):
-        sp=nx.bellman_ford_path(aux_graph,start_point,des_point,weight="delay")
+        try:
+            sp=nx.bellman_ford_path(aux_graph,start_point,des_point,weight="delay")
+        except:
+            return None
         if sp is None:
             return None
         else:
-            all_sp.append(sp)
+            all_sp=paths_xor(all_sp,sp)
             cur_sp_num+=1
         aux_graph=get_delay_reverse_graph(graph,all_sp)
     return all_sp
@@ -78,7 +118,7 @@ def get_ori_node(cur_node,node_num):
     upper_num=(cur_node-ori_node)/node_num
     return ori_node,upper_num
 
-def get_cycle_aux_graph(graph,cost_bound):
+def get_cycle_aux_graph(graph,cost_bound,des_point):
     """获得环O需要拆点的辅助图，这个就是获得辅助图"""
     node_num=graph.number_of_nodes()
     aux_graph=nx.DiGraph()
@@ -97,7 +137,11 @@ def get_cycle_aux_graph(graph,cost_bound):
                 new_u=get_split_node(u,u_upper_num,node_num)
                 new_v=get_split_node(v,v_upper_num,node_num)
                 aux_graph.add_edge(new_u,new_v,delay=delay)
-    aux_graph["cost_bound"]=cost_bound
+
+    for upper_num in range(1,cost_bound+1):#单独为点t添加上delay为0的边
+        split_node=get_split_node(des_point,upper_num,node_num)
+        aux_graph.add_edge(split_node,des_point,delay=0)
+    #aux_graph["cost_bound"]=cost_bound
     return aux_graph
 
 def get_ori_path(path,node_num):
@@ -107,29 +151,39 @@ def get_ori_path(path,node_num):
         tmp.append(ori_node)
     return tmp
 
-def get_bicameral_cycle(reversed_graph,cost_bound):
-    aux_graph=get_cycle_aux_graph(reversed_graph,cost_bound)
+def get_bicameral_cycle(reversed_graph,cost_bound,des_point):
+    aux_graph=get_cycle_aux_graph(reversed_graph,cost_bound,des_point)
     node_num=reversed_graph.number_of_nodes()
-    if nx.negative_edge_cycle(aux_graph,weight="delay"):
         #发现负环时直接使用负环,目前等待处理
-        for cycle in nx.simple_cycles(aux_graph):
-            print(cycle)
-        return None
-    else:
-        #没有负环
-        for node in reversed_graph.nodes():
-            for upper_num in range(1,cost_bound+1):
-                start_node=get_split_node(node,upper_num,node_num)
-                path_delay=nx.bellman_ford_path_length(aux_graph,start_node,node,weight="delay")
+    print("33")
+    for cycle in nx.simple_cycles(reversed_graph):#由于bellman_ford算法只能判断负环而不能获得负环，而且nx中的
+        tmp=[]                               #判断负环(也不能获得负环)有奇怪的错误,所以直接找负环   
+        cycle.append(cycle[0])#networkx返回的环不包括重复的点，不加入会使边少一条
+        tmp.append(cycle)
+        if count_attr(reversed_graph,tmp,"delay")<0:
+            #cycle=get_ori_path(cycle,node_num)
+            print("有负圈:  "+str(cycle))
+            print("delay:   "+str(count_attr(reversed_graph,tmp,"delay")))
+            return cycle
+    #没有负环
+    print("22")
+    for node in reversed_graph.nodes():
+        for upper_num_s in range(0,cost_bound):
+            for upper_num_t in range(upper_num_s+1,cost_bound+1):
+                s=get_split_node(node,upper_num_s,node_num)
+                t=get_split_node(node,upper_num_t,node_num)
+                try:#可能存在不可达的出错情况
+                    path_delay=nx.bellman_ford_path_length(aux_graph,s,t,weight="delay")
+                except:
+                    continue
                 if path_delay>=0:#当找到的路径没有改善时放弃
                     continue
                 else:
                     #获得的是辅助图中的路径，需要转成普通路径
-                    cycle_path=nx.bellman_ford_path(aux_graph,start_node,node,weight="delay")
+                    cycle_path=nx.bellman_ford_path(aux_graph,s,t,weight="delay")
                     ori_cycle=get_ori_path(cycle_path,node_num)
                     return ori_cycle#这里返回的时环的简单点路径，且首尾点重复
-
-        return None
+    return None
 
 def cycle_path_xor(cycle_path,paths):
     """将k条路径与一个bicameral cycle进行异或"""
@@ -170,8 +224,8 @@ def get_all_reverse_graph(graph,paths):
         for index in range(len(path)-1):
             u=path[index]
             v=path[index+1]
-            cost=graph[u][v]["cost"]
-            delay=graph[u][v]["delay"]
+            cost=reverse_graph[u][v]["cost"]
+            delay=reverse_graph[u][v]["delay"]
             reverse_graph.remove_edge(u,v)
             reverse_graph.add_edge(v,u,cost=-cost,delay=-delay)
 
@@ -179,6 +233,8 @@ def get_all_reverse_graph(graph,paths):
 
 def get_kRSP(graph,start_point,des_point,sp_num,max_delay):
     ksp_for_delay=get_ksp_with_delay(graph,start_point,des_point,sp_num)
+    if ksp_for_delay is None:#可能delay的也无法得到ksp
+        return None
     total_delay=count_attr(graph,ksp_for_delay,"delay")
     if total_delay>max_delay:#提前结束算法，不会有结果
         return None
@@ -191,14 +247,28 @@ def get_kRSP(graph,start_point,des_point,sp_num,max_delay):
     low_bound_cost=count_attr(graph,ksp_for_cost,"cost")
     up_bound_cost=count_attr(graph,ksp_for_delay,"cost")
     while(low_bound_cost<up_bound_cost):
+        print("bound:  "+str(low_bound_cost)+"----"+str(up_bound_cost))
+        print("current delay: "+str(count_attr(graph,ksp_for_cost,"delay"))+"  cur cost:  "+str(count_attr(graph,ksp_for_cost,"cost")))
+        print("curPath: "+str(ksp_for_cost))
         #此处使用二分法缩短cost_bound
-        mid_bound_cost=(low_bound_cost+up_bound_cost)/2
+        mid_bound_cost=math.floor((low_bound_cost+up_bound_cost)/2)
+        if mid_bound_cost==low_bound_cost:#不跳出会死循环
+            break
+        print("循环")
         reverse_graph=get_all_reverse_graph(graph,ksp_for_cost)
-        bicameral_cycle=get_bicameral_cycle(reverse_graph,mid_bound_cost-low_bound_cost)
+        cur_cost=count_attr(graph,ksp_for_cost,"cost")
+        bicameral_cycle=get_bicameral_cycle(reverse_graph,mid_bound_cost-cur_cost,des_point)
+        print("cycle:  "+str(bicameral_cycle))
         if bicameral_cycle!=None:
             ksp_for_cost=cycle_path_xor(bicameral_cycle,ksp_for_cost)
-            up_bound_cost=mid_bound_cost
+            if count_attr(graph,ksp_for_cost,"delay")<=max_delay:
+                up_bound_cost=mid_bound_cost
+            else:
+                low_bound_cost=mid_bound_cost
         else:
             low_bound_cost=mid_bound_cost
+    if count_attr(graph,ksp_for_cost,"delay")>max_delay:#如果到了最后delay还是不满足条件，说明只能取delay最小的路径集合了
+        return ksp_for_delay
+        
     return ksp_for_cost
 

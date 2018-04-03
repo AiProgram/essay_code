@@ -1,18 +1,20 @@
 import algorithm as alg
 import graph_gen as gg
 if __name__=="__main__":
-    node_num=50
-    edge_num=800
-    max_delay=50
-    sp_num=4
+    node_num=40
+    edge_num=500
+    max_delay=35
+    sp_num=3
     start_point=1
-    des_point=20
+    des_point=35
 
-    graph=gg.getRandomGraph(node_num,edge_num)
-    ksp=alg.get_kRSP(graph,start_point,des_point,sp_num,max_delay)
-    print(ksp)
-    if ksp!=None:
-        for path in ksp:
-            tmp=[]
-            tmp.append(path)
-            print(alg.count_attr(graph,tmp,"cost"))
+    for i in range(10):
+        graph=gg.getRandomGraph(node_num,edge_num)
+        ksp=alg.get_kRSP(graph,start_point,des_point,sp_num,max_delay)
+        if ksp is not None:
+            print(ksp)
+            print(alg.count_attr(graph,ksp,"cost"))
+            print(alg.count_attr(graph,ksp,"delay"))
+        else:
+            print("没有结果")
+        print("------")
