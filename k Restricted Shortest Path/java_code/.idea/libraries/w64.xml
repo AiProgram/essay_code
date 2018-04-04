@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="w64">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/glpk-4.64/w64" />
+    </CLASSES>
+    <JAVADOC />
+    <NATIVE>
+      <root url="file://$PROJECT_DIR$/glpk-4.64/w64" />
+    </NATIVE>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/glpk-4.64/w64" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/glpk-4.64/w64" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/glpk-4.64/w64" recursive="false" type="SOURCES" />
+  </library>
+</component>
