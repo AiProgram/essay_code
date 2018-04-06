@@ -284,7 +284,7 @@ public class GraphLPAlg {
                 lpFile=lpFolder+lpFile;
                 solFile=outPutFolder+solFile;
 
-                String cmd=glpkPath+" --cpxlp "+lpFile+" -o "+solFile;
+                String cmd=glpkPath+" --cpxlp "+lpFile+" -0 "+solFile;
                 long timeAll=0;
                 long start=System.currentTimeMillis();
                 for(int j=0;j<repeateTime;j++)
@@ -311,7 +311,7 @@ public class GraphLPAlg {
     }
     public  void test()
     {
-        getLPGroup();
+        //getLPGroup();
         runCodeGroup();
     }
 

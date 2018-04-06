@@ -337,14 +337,14 @@ public class JavaLPAlg {
         System.out.print(name);
         System.out.print(" = ");
         System.out.println(val);
-//        n = GLPK.glp_get_num_cols(lp);
-//        for (i = 1; i <= n; i++) {
-//            name = GLPK.glp_get_col_name(lp, i);
-//            val = GLPK.glp_get_col_prim(lp, i);
-//            System.out.print(name);
-//            System.out.print(" = ");
-//            System.out.println(val);
-//        }
+        n = GLPK.glp_get_num_cols(lp);
+        for (i = 1; i <= n; i++) {
+            name = GLPK.glp_get_col_name(lp, i);
+            val = GLPK.glp_get_col_prim(lp, i);
+            System.out.print(name);
+            System.out.print(" = ");
+            System.out.println(val);
+        }
         return val;
     }
     public void  test(){

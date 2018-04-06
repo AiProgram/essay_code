@@ -12,7 +12,7 @@ public class MyGraph {
     public Map<DefaultWeightedEdge,Integer> costMap;
     public Map<DefaultWeightedEdge,Integer> delayMap;
     private CurentWeight curentWeight=CurentWeight.cost;//默认把cost当作weight放进去
-    MyGraph(){
+    public MyGraph(){
         graph=new DefaultDirectedWeightedGraph<>(DefaultWeightedEdge.class);
         costMap=new HashMap<>();
         delayMap=new HashMap<>();
