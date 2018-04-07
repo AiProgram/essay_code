@@ -39,6 +39,13 @@ public class MyGraph {
         return newEdge;
     }
 
+    public void removeAllEdges(int src,int tar){
+        DefaultWeightedEdge edge=this.graph.getEdge(src,tar);
+        this.costMap.remove(edge);
+        this.delayMap.remove(edge);
+        this.graph.removeAllEdges(src,tar);
+    }
+
     /**
      *
      * 用来设置当前的图的weight是cost还是delay，因为GraphT不支持动态切换
