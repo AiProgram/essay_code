@@ -10,6 +10,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +57,7 @@ public class KRSPAlgorithm {
         for(int i=0;i<pathP.size()-1;i++)
         {
            int u=pathP.get(i);
-           int v=pathP.get(i-1);
+           int v=pathP.get(i+1);
            if(graph.containsEdge(v,u)){
                 graph.removeAllEdges(v,u);
            }
@@ -196,8 +197,8 @@ public class KRSPAlgorithm {
         delay,cost
     }
 
-    public double countAttr(MyGraph graph,List<List<Integer>>paths,Attr attr){
-        double sum=0;
+    public int countAttr(MyGraph graph,List<List<Integer>>paths,Attr attr){
+        int  sum=0;
         for(int i=0;i<paths.size();i++)
         {
             List<Integer> path=paths.get(i);
@@ -327,6 +328,74 @@ public class KRSPAlgorithm {
 
         }
         return null;
+    }
+
+    public MyGraph getAllReverseGraph(MyGraph myGraph,List<List<Integer>>paths){
+        MyGraph reverseGraph=myGraph.copyGraph();
+        for(int i=0;i<paths.size();i++)
+        {
+            List<Integer>path=paths.get(i);
+            for(int index=0;index<=path.size()-1;index++)
+            {
+                int u=path.get(index);
+                int v=path.get(index+1);
+                DefaultWeightedEdge edge=myGraph.graph.getEdge(u,v);
+                int cost=myGraph.costMap.get(edge);
+                int delay=myGraph.delayMap.get(edge);
+                reverseGraph.removeAllEdges(u,v);
+                reverseGraph.addNewEdge(v,u,-cost,-delay);
+            }
+        }
+        return reverseGraph;
+    }
+
+    public List<List<Integer>>getKSP(MyGraph graph,int startPoint,int desPoint,int spNum,int maxDelay){
+        List<List<Integer>> kspForDelay=getKSPWithDelay(graph,startPoint,desPoint,spNum);
+        if(kspForDelay==null)//可能delay无法得到ksp
+            return null;
+        int totalDelay=countAttr(graph,kspForDelay,Attr.delay);
+        if(totalDelay>maxDelay)//提前结束算法，不会有结果
+            return null;
+
+
+        List<List<Integer>>kspForCost=getKSPWithCost(graph,startPoint,desPoint,spNum);
+        totalDelay=countAttr(graph,kspForCost,Attr.delay);
+        if(totalDelay<maxDelay)//提前结束，已经找到结果
+            return kspForCost;
+
+        int lowBoundCost=countAttr(graph,kspForCost,Attr.cost);
+        int upBoundCost=countAttr(graph,kspForDelay,Attr.cost);
+        while(lowBoundCost<upBoundCost)
+        {
+            System.out.println("bound: "+lowBoundCost+"-----"+upBoundCost);
+            System.out.println("current delay:  "+countAttr(graph,kspForCost,Attr.delay)+" current cost: "+countAttr(graph,kspForCost,Attr.cost));
+            System.out.println("curPath:  "+kspForCost);
+            //此处利用二分法缩短costbound
+            int midCostBound=(lowBoundCost+upBoundCost)/2;
+            if(midCostBound==lowBoundCost)//不然会死循环
+                break;
+            System.out.println("循环");
+            MyGraph reverseGraph=getAllReverseGraph(graph,kspForCost);
+            int curCost=countAttr(graph,kspForCost,Attr.cost);
+            List<Integer> bicameralCycle=getBicameralCycle(reverseGraph,midCostBound-curCost,desPoint);
+            System.out.println("cycle:  "+bicameralCycle);
+            if(bicameralCycle!=null)
+            {
+                kspForCost=pathsXor(kspForCost,bicameralCycle);
+                if(countAttr(graph,kspForCost,Attr.delay)<maxDelay)
+                {
+                    upBoundCost=midCostBound;
+                }else{
+                    lowBoundCost=midCostBound;
+                }
+            }else{
+                lowBoundCost=midCostBound;
+            }
+        }
+        //如果到了最后delay还是不满足条件，说明只能取delay最小的集合了
+        if(countAttr(graph,kspForCost,Attr.delay)>maxDelay)
+            return kspForDelay;
+        return kspForCost;
     }
     public static void main(String args[]){
 
