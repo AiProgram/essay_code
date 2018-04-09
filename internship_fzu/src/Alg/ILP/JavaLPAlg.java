@@ -114,7 +114,7 @@ public class JavaLPAlg {
 
     public static double solveWithGLPK(ILPGraph myGraph,int probId){
         glp_prob lp;
-        glp_smcp parm;
+        glp_iocp parm;
         SWIGTYPE_p_int index;
         SWIGTYPE_p_double val;
         DirectedWeightedMultigraph<Integer,DefaultWeightedEdge> graph=myGraph.graph;
@@ -224,9 +224,11 @@ public class JavaLPAlg {
             }
 
             //解决模型
-            parm = new glp_smcp();
-            GLPK.glp_init_smcp(parm);
-            ret = GLPK.glp_simplex(lp, parm);
+
+            parm=new glp_iocp();
+            GLPK.glp_init_iocp(parm);
+            parm.setPresolve(GLPKConstants.GLP_ON);
+            ret=GLPK.glp_intopt(lp,parm);
 //            if(this.isTest) {//测试时输出文件使用
 //                GLPK.glp_write_sol(lp, probId + ".sol");
 //                glp_cpxcp p = new glp_cpxcp();
@@ -333,14 +335,14 @@ public class JavaLPAlg {
         double val;
 
         name = GLPK.glp_get_obj_name(lp);
-        val = GLPK.glp_get_obj_val(lp);
+        val = GLPK.glp_mip_obj_val(lp);
         System.out.print(name);
         System.out.print(" = ");
         System.out.println(val);
         n = GLPK.glp_get_num_cols(lp);
         for (i = 1; i <= n; i++) {
             name = GLPK.glp_get_col_name(lp, i);
-            val = GLPK.glp_get_col_prim(lp, i);
+            val = GLPK.glp_mip_col_val(lp, i);
             System.out.print(name);
             System.out.print(" = ");
             System.out.println(val);
