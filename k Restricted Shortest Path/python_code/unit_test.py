@@ -17,3 +17,5 @@ if __name__=="__main__":
 
     #cycle=alg.get_bicameral_cycle(graph,6)
     #print(cycle)
+    cycle=alg.find_negative_cycle(graph,0)
+    print(cycle)

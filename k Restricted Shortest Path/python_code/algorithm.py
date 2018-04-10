@@ -1,6 +1,8 @@
 import networkx as nx
 import copy
 import math
+import  numpy as np
+INF=1<<28
 def paths_xor(paths,pathP):
     """求k条路径时，没加入一条路径，处理一次,因为pathP中会有反向边"""
     start_point=pathP[0]
@@ -151,22 +153,68 @@ def get_ori_path(path,node_num):
         tmp.append(ori_node)
     return tmp
 
-def get_bicameral_cycle(reversed_graph,cost_bound,des_point):
+def find_negative_cycle(graph,start_point):
+    node_num=graph.number_of_nodes()
+    dist_arr=np.zeros((node_num),dtype=int)
+    pre=np.zeros((node_num),dtype=int)
+    for i in  range(node_num):
+        dist_arr[i]=INF
+        pre[i]=-1
+    
+    for i in range(1,node_num):
+        for u,v in graph.edges():
+            w=graph[u][v]["delay"]
+            if dist_arr[u]+w<dist_arr[v]:
+                dist_arr[v]=dist_arr[u]+w
+                pre[v]=u
+
+    exist_arr=np.zeros((node_num),dtype=bool)
+    for i  in range(node_num):
+        exist_arr[i]=False
+
+    negative_ori=0
+    has_cycle=False
+    for u,v in graph.edges():
+        w=graph[u][v]["delay"]
+        if  dist_arr[u]+w<dist_arr[v]:
+            has_cycle=True
+            negative_ori=u
+
+    if has_cycle:
+        cur_node=negative_ori
+        cycle=[]
+        while True:
+            if not exist_arr[cur_node]:
+                exist_arr[cur_node]=True
+                cycle.append(cur_node)
+                cur_node=pre[cur_node]
+            else:
+                cycle.append(cur_node)
+                tmp=[]
+                flag=False
+                for node in cycle:
+                    if not flag:
+                        if node==cur_node:
+                            flag=True
+                            tmp.append(cur_node)
+                    else:
+                        tmp.append(node)
+                tmp.reverse()
+                return tmp
+    else:
+        return None
+
+
+def get_bicameral_cycle(reversed_graph,cost_bound,start_point,des_point):
     aux_graph=get_cycle_aux_graph(reversed_graph,cost_bound,des_point)
     node_num=reversed_graph.number_of_nodes()
-        #发现负环时直接使用负环,目前等待处理
-    print("33")
-    for cycle in nx.simple_cycles(reversed_graph):#由于bellman_ford算法只能判断负环而不能获得负环，而且nx中的
-        tmp=[]                               #判断负环(也不能获得负环)有奇怪的错误,所以直接找负环   
-        cycle.append(cycle[0])#networkx返回的环不包括重复的点，不加入会使边少一条
-        tmp.append(cycle)
-        if count_attr(reversed_graph,tmp,"delay")<0:
-            #cycle=get_ori_path(cycle,node_num)
-            print("有负圈:  "+str(cycle))
-            print("delay:   "+str(count_attr(reversed_graph,tmp,"delay")))
-            return cycle
+    #发现负环时直接使用负环,目前等待处理
+    for upper_num in range(cost_bound+1):
+        cycle=find_negative_cycle(aux_graph,get_split_node(start_point,upper_num,node_num))
+        if cycle is not None:
+            print("负圈")
+            return get_ori_path(cycle,node_num)
     #没有负环
-    print("22")
     for node in reversed_graph.nodes():
         for upper_num_s in range(0,cost_bound):
             for upper_num_t in range(upper_num_s+1,cost_bound+1):
@@ -254,10 +302,9 @@ def get_kRSP(graph,start_point,des_point,sp_num,max_delay):
         mid_bound_cost=math.floor((low_bound_cost+up_bound_cost)/2)
         if mid_bound_cost==low_bound_cost:#不跳出会死循环
             break
-        print("循环")
         reverse_graph=get_all_reverse_graph(graph,ksp_for_cost)
         cur_cost=count_attr(graph,ksp_for_cost,"cost")
-        bicameral_cycle=get_bicameral_cycle(reverse_graph,mid_bound_cost-cur_cost,des_point)
+        bicameral_cycle=get_bicameral_cycle(reverse_graph,mid_bound_cost-cur_cost,start_point,des_point)
         print("cycle:  "+str(bicameral_cycle))
         if bicameral_cycle!=None:
             ksp_for_cost=cycle_path_xor(bicameral_cycle,ksp_for_cost)

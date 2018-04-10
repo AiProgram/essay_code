@@ -3,7 +3,7 @@ import graph_gen as gg
 if __name__=="__main__":
     node_num=40
     edge_num=500
-    max_delay=35
+    max_delay=30
     sp_num=3
     start_point=1
     des_point=35
