@@ -139,10 +139,6 @@ def get_cycle_aux_graph(graph,cost_bound,des_point):
                 new_u=get_split_node(u,u_upper_num,node_num)
                 new_v=get_split_node(v,v_upper_num,node_num)
                 aux_graph.add_edge(new_u,new_v,delay=delay)
-
-    for upper_num in range(1,cost_bound+1):#单独为点t添加上delay为0的边
-        split_node=get_split_node(des_point,upper_num,node_num)
-        aux_graph.add_edge(split_node,des_point,delay=0)
     #aux_graph["cost_bound"]=cost_bound
     return aux_graph
 
@@ -233,7 +229,7 @@ def get_bicameral_cycle(reversed_graph,cost_bound,start_point,des_point):
                     return ori_cycle#这里返回的时环的简单点路径，且首尾点重复
     return None
 
-def cycle_path_xor(cycle_path,paths):
+def cycle_path_xor(cycle_path,paths,sp_num):
     """将k条路径与一个bicameral cycle进行异或"""
     graph=nx.DiGraph()
     start_point=paths[0][0]
@@ -259,10 +255,20 @@ def cycle_path_xor(cycle_path,paths):
         else:
             graph.add_edge(u,v)
 
-    new_paths=[]
-    for path in nx.all_simple_paths(graph,start_point,des_point):
-        new_paths.append(path)
-    return new_paths
+    #这里也可能出现有多条简单路径共用边的情况，这是错误的，所以取出一条边就删一条边 
+    #但是边不一定会像path_xor一样删完，所以用路径条数限制
+    tmp=[]
+    p_num=0
+    while p_num<sp_num:
+        for path in nx.all_simple_paths(graph,start_point,des_point):
+            tmp.append(path)
+            p_num+=1
+            for index in range(len(path)-1):
+                u=path[index]
+                v=path[index+1]
+                graph.remove_edge(u,v)#每一次只取一条，然后删边防止重复
+            break
+    return tmp
 
 def get_all_reverse_graph(graph,paths):
     """将图中的所有相关路径反向，并且cost和delay全部取反,默认不修改原图"""
@@ -306,8 +312,10 @@ def get_kRSP(graph,start_point,des_point,sp_num,max_delay):
         cur_cost=count_attr(graph,ksp_for_cost,"cost")
         bicameral_cycle=get_bicameral_cycle(reverse_graph,mid_bound_cost-cur_cost,start_point,des_point)
         print("cycle:  "+str(bicameral_cycle))
+        #if bicameral_cycle is not None:
+        #    print("cycle delay: "+str(count_attr(reverse_graph,[bicameral_cycle],"delay")))
         if bicameral_cycle!=None:
-            ksp_for_cost=cycle_path_xor(bicameral_cycle,ksp_for_cost)
+            ksp_for_cost=cycle_path_xor(bicameral_cycle,ksp_for_cost,sp_num)
             if count_attr(graph,ksp_for_cost,"delay")<=max_delay:
                 up_bound_cost=mid_bound_cost
             else:

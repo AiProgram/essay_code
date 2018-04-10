@@ -29,7 +29,7 @@ public class MyGraph {
     public DefaultWeightedEdge addNewEdge(int src,int tar,int cost,int delay)//封装好的添加新边
     {
         DefaultWeightedEdge newEdge=this.graph.getEdgeFactory().createEdge(src,tar);
-        graph.addEdge(src,tar);
+        graph.addEdge(src,tar,newEdge);
 
         if(curentWeight==CurentWeight.cost)graph.setEdgeWeight(newEdge,cost);//防止在调整了curentWeight后出现混乱
         else graph.setEdgeWeight(newEdge,delay);
