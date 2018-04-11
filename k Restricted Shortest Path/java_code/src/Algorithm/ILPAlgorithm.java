@@ -158,7 +158,7 @@ public class ILPAlgorithm {
         n = GLPK.glp_get_num_rows(lp);//用于提取delay总和
         for (i = 1; i <= n; i++) {
             name = GLPK.glp_get_row_name(lp, i);
-            System.out.println(name);
+            //System.out.println(name);
             if(name.equals("c0")) {//找到delay统计所在的约束
                 val = GLPK.glp_mip_row_val(lp, i);
                 break;
@@ -171,7 +171,7 @@ public class ILPAlgorithm {
         for (i = 1; i <= n; i++) {
             name = GLPK.glp_get_col_name(lp, i);
             val = GLPK.glp_mip_col_val(lp, i);
-            System.out.println(name+"  "+val);
+            //System.out.println(name+"  "+val);
             int edgeIndex=Integer.parseInt(name.substring(1));//提取边的编号,注意这里同样从1开始
             if(val>0) result.usedEdges.add(edgeIndex);
         }

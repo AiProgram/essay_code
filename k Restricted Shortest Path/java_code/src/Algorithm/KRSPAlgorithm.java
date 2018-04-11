@@ -1,5 +1,7 @@
 package Algorithm;
 
+import GraphIO.CSVCol;
+import GraphIO.CSVRecorder;
 import GraphIO.GraphRandGen;
 import GraphStructure.MyGraph;
 import jdk.jshell.spi.ExecutionControlProvider;
@@ -16,6 +18,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static Algorithm.ILPAlgorithm.solveWithGLPK;
 
 public class KRSPAlgorithm {
     /**
@@ -372,9 +376,10 @@ public class KRSPAlgorithm {
 
     }
 
-    public List<Integer>getBicameralCycle(MyGraph reverseGraph,int costBound,int startPoint,int desPoint){
+    public List<Integer>getBicameralCycle(MyGraph reverseGraph,List<List<Integer>>ksp,int costBound,int startPoint,int desPoint,int spNum){
         MyGraph auxGraph=getCycleAuxGraph(reverseGraph,costBound,desPoint);
         int nodeNum=reverseGraph.graph.vertexSet().size();
+
 
         //发现有负环时使用负环
         for(int upperNum=0;upperNum<costBound+1;upperNum++)
@@ -382,7 +387,9 @@ public class KRSPAlgorithm {
             List<Integer>cycle=findNegativeCycle(auxGraph,getSplitNode(startPoint,upperNum,nodeNum));
             if(cycle!=null){
                 System.out.println("负环");
-                return getOriPath(cycle,nodeNum);
+                cycle=getOriPath(cycle,nodeNum);
+                //当找到的环不可取时需要 继续寻找,不可取的原因见cyclePathXor函数
+                if(cyclePathXor(cycle,ksp,spNum)!=null) return cycle;
             }
         }
         //等待编写负环使用代码
@@ -405,7 +412,9 @@ public class KRSPAlgorithm {
                         if(delaySum>0) continue;//没有改善时启用这条路径
                         else{
                             GraphPath<Integer,DefaultWeightedEdge>path=shortestPath.getPath(s,t);
-                            return getOriPath(path.getVertexList(),nodeNum);//这里返回的环是点集，且首尾重复
+                            List<Integer>cycle=getOriPath(path.getVertexList(),nodeNum);//这里返回的环是点集，且首尾重复
+                            //当找到的环不可取时继续寻找
+                            if(cyclePathXor(cycle,ksp,spNum)!=null) return cycle;
                         }
                     }catch (Exception e){
                         continue;
@@ -481,7 +490,15 @@ public class KRSPAlgorithm {
         while(pNum<spNum){
             AllDirectedPaths<Integer,DefaultEdge> allDirectedPaths=new AllDirectedPaths<>(graph);
             List<GraphPath<Integer,DefaultEdge>> oriPaths=allDirectedPaths.getAllPaths(startPoint,desPoint,true,null);
-            GraphPath<Integer,DefaultEdge> oriPath=oriPaths.get(0);
+            GraphPath<Integer,DefaultEdge> oriPath;
+            try {
+                //前面的路径和bicameral cycle的异或可能会使不相交路径的条数减少，所以可能会使异或后不相交路径数量少于规定的数值，这时bicameral cycle不可取
+                oriPath = oriPaths.get(0);
+            }catch (Exception e){
+                //e.printStackTrace();
+                System.out.println("残余路径"+tmp);
+                return null;
+            }
             List<Integer>tmpPath=oriPath.getVertexList();
             tmp.add(tmpPath);
             pNum++;
@@ -522,14 +539,16 @@ public class KRSPAlgorithm {
             System.out.println("循环");
             MyGraph reverseGraph=getAllReverseGraph(graph,kspForCost);
             int curCost=countAttr(graph,kspForCost,Attr.cost);
-            List<Integer> bicameralCycle=getBicameralCycle(reverseGraph,midCostBound-curCost,startPoint,desPoint);
+            List<Integer> bicameralCycle=getBicameralCycle(reverseGraph,kspForCost,midCostBound-curCost,startPoint,desPoint,spNum);
             System.out.println("cycle:  "+bicameralCycle);
             if(bicameralCycle!=null)
             {
                 kspForCost=cyclePathXor(bicameralCycle,kspForCost,spNum);
+                System.out.println(kspForCost);
                 if(countAttr(graph,kspForCost,Attr.delay)<maxDelay)
                 {
                     upBoundCost=midCostBound;
+                    return kspForCost;
                 }else{
                     lowBoundCost=midCostBound;
                 }
@@ -545,24 +564,43 @@ public class KRSPAlgorithm {
     public static void main(String args[]){
 
         KRSPAlgorithm algorithm=new KRSPAlgorithm();
-        int maxDelay=35;
-        int spNum=4;
+        int maxDelay=28;
+        int spNum=3;
         int startPoint=1;
-        int desPoint=35;
-        for(int i=0;i<10;i++)
+        int desPoint=20;
+        int times=50;
+
+        String csvData[][]=new String[times][CSVCol.colNum];
+        CSVCol col=new CSVCol();
+        for(int i=0;i<times;i++)
         {
+            csvData[i][col.graphId]=Integer.toString(i);
             GraphRandGen graphRandGen=new GraphRandGen();
             MyGraph myGrap=graphRandGen.generateRandomGraph(50,800);
             List<List<Integer>>ksp=algorithm.getKSP(myGrap,startPoint,desPoint,spNum,maxDelay);
             if(ksp!=null)
             {
                 System.out.println(ksp);
-                System.out.println("cost: "+algorithm.countAttr(myGrap,ksp,Attr.cost));
-                System.out.println("delay: "+algorithm.countAttr(myGrap,ksp,Attr.delay));
+                int cost=algorithm.countAttr(myGrap,ksp,Attr.cost);
+                int delay=algorithm.countAttr(myGrap,ksp,Attr.delay);
+                System.out.println("cost: "+cost);
+                System.out.println("delay: "+delay);
+                csvData[i][col.newAlgCost]=Integer.toString(cost);
+                csvData[i][col.newAlgDelay]=Integer.toString(delay);
             }else{
                 System.out.println("没有结果");
             }
+            System.out.println("++++++++++++++++");
+            kRSPResult result=solveWithGLPK(myGrap,startPoint,desPoint,spNum,maxDelay);
+            if(result!=null) {
+                System.out.println(result.costSum + "   " + result.delaySum);
+                System.out.println(result.usedEdges);
+                csvData[i][col.ILPCost] = Double.toString(result.costSum);
+                csvData[i][col.ILPDelay] = Double.toString(result.delaySum);
+            }
             System.out.println("----------------");
         }
+        CSVRecorder recorder=new CSVRecorder();
+        recorder.writeToCSV("data.csv",csvData);
     }
 }
