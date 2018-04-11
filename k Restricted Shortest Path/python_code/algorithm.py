@@ -201,15 +201,17 @@ def find_negative_cycle(graph,start_point):
         return None
 
 
-def get_bicameral_cycle(reversed_graph,cost_bound,start_point,des_point):
+def get_bicameral_cycle(reversed_graph,ksp,cost_bound,start_point,des_point,sp_num):
     aux_graph=get_cycle_aux_graph(reversed_graph,cost_bound,des_point)
     node_num=reversed_graph.number_of_nodes()
     #发现负环时直接使用负环,目前等待处理
     for upper_num in range(cost_bound+1):
         cycle=find_negative_cycle(aux_graph,get_split_node(start_point,upper_num,node_num))
         if cycle is not None:
-            print("负圈")
-            return get_ori_path(cycle,node_num)
+            cycle=get_ori_path(cycle,node_num)
+            if cycle_path_xor(cycle,ksp,sp_num) is not None:
+                print("负圈")
+                return  cycle
     #没有负环
     for node in reversed_graph.nodes():
         for upper_num_s in range(0,cost_bound):
@@ -226,7 +228,8 @@ def get_bicameral_cycle(reversed_graph,cost_bound,start_point,des_point):
                     #获得的是辅助图中的路径，需要转成普通路径
                     cycle_path=nx.bellman_ford_path(aux_graph,s,t,weight="delay")
                     ori_cycle=get_ori_path(cycle_path,node_num)
-                    return ori_cycle#这里返回的时环的简单点路径，且首尾点重复
+                    if cycle_path_xor(ori_cycle,ksp,sp_num) is  not None:
+                        return ori_cycle#这里返回的时环的简单点路径，且首尾点重复
     return None
 
 def cycle_path_xor(cycle_path,paths,sp_num):
@@ -261,6 +264,8 @@ def cycle_path_xor(cycle_path,paths,sp_num):
     p_num=0
     while p_num<sp_num:
         for path in nx.all_simple_paths(graph,start_point,des_point):
+            if path is None:
+                return None
             tmp.append(path)
             p_num+=1
             for index in range(len(path)-1):
@@ -310,7 +315,7 @@ def get_kRSP(graph,start_point,des_point,sp_num,max_delay):
             break
         reverse_graph=get_all_reverse_graph(graph,ksp_for_cost)
         cur_cost=count_attr(graph,ksp_for_cost,"cost")
-        bicameral_cycle=get_bicameral_cycle(reverse_graph,mid_bound_cost-cur_cost,start_point,des_point)
+        bicameral_cycle=get_bicameral_cycle(reverse_graph,ksp_for_cost,mid_bound_cost-cur_cost,start_point,des_point,sp_num)
         print("cycle:  "+str(bicameral_cycle))
         #if bicameral_cycle is not None:
         #    print("cycle delay: "+str(count_attr(reverse_graph,[bicameral_cycle],"delay")))

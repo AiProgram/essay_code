@@ -23,11 +23,14 @@ public class CSVCol {
     public  final int ILPDelay=13;
     public  final int ILPPath=14;
 
+    public final int costRatio=15;
+    public final int delayRatio=16;
 
-    public static int colNum=15;//列的总数量
+
+    public static int colNum=17;//列的总数量
     public static String csvHeader[]={
             "graphId","nodeNum","edgeNum","startPoint","desPoint","maxDelay","graphFile"
             ,"newAlgRunTime","newAlgCost","newAlgDelay","newAlgPath","ILPRunTime","ILPCost"
-            ,"ILPDelay","ILPPath"
+            ,"ILPDelay","ILPPath","costRatio","delayRatio"
     };
 }

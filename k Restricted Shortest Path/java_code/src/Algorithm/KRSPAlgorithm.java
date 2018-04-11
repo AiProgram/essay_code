@@ -14,9 +14,7 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 import static Algorithm.ILPAlgorithm.solveWithGLPK;
@@ -216,6 +214,8 @@ public class KRSPAlgorithm {
                 int u=path.get(index);
                 int v=path.get(index+1);
                 DefaultWeightedEdge edge=graph.graph.getEdge(u,v);
+//                if(!graph.graph.containsEdge(edge))
+//                    System.out.println("找不到边");
                 if(attr==Attr.cost) sum+=graph.costMap.get(edge);
                 else sum+=graph.delayMap.get(edge);
             }
@@ -474,6 +474,9 @@ public class KRSPAlgorithm {
                 graph.addEdge(u,v);
             }
         }
+        //这里存在一种特殊情况：在paths中有一条边(u,v)，而cycle中有两条(v,u)，这时第一条边(v,u)抵消掉了(u,v)，而第二条(v,u)会被错误添加
+        //但是 我们可以保证paths中没有边 会重复，所以不会有相反的情况发生
+        Map<Integer,Integer>deletedEdge=new HashMap<>();//记录已经被删掉的反向边
         for(int i=0;i<cycle.size()-1;i++)
         {
             int u=cycle.get(i);
@@ -481,8 +484,10 @@ public class KRSPAlgorithm {
             if(graph.containsEdge(v,u))
             {
                 graph.removeAllEdges(v,u);
+                deletedEdge.put(v,u);
             }else{
-                graph.addEdge(u,v);
+                if(!deletedEdge.containsKey(v)||deletedEdge.get(v)!=u)//处理特殊情况
+                    graph.addEdge(u,v);
             }
         }
         List<List<Integer>>tmp=new ArrayList<>();
@@ -574,9 +579,18 @@ public class KRSPAlgorithm {
         CSVCol col=new CSVCol();
         for(int i=0;i<times;i++)
         {
+            csvData[i][col.maxDelay]=Integer.toString(maxDelay);
             csvData[i][col.graphId]=Integer.toString(i);
             GraphRandGen graphRandGen=new GraphRandGen();
-            MyGraph myGrap=graphRandGen.generateRandomGraph(50,800);
+            MyGraph myGrap=graphRandGen.generateRandomGraph(50,600);
+            kRSPResult result=solveWithGLPK(myGrap,startPoint,desPoint,spNum,maxDelay);
+            if(result!=null) {
+                System.out.println(result.costSum + "   " + result.delaySum);
+                System.out.println(result.usedEdges);
+                csvData[i][col.ILPCost] = Double.toString(result.costSum);
+                csvData[i][col.ILPDelay] = Double.toString(result.delaySum);
+            }
+            System.out.println("----------------");
             List<List<Integer>>ksp=algorithm.getKSP(myGrap,startPoint,desPoint,spNum,maxDelay);
             if(ksp!=null)
             {
@@ -587,18 +601,12 @@ public class KRSPAlgorithm {
                 System.out.println("delay: "+delay);
                 csvData[i][col.newAlgCost]=Integer.toString(cost);
                 csvData[i][col.newAlgDelay]=Integer.toString(delay);
+                csvData[i][col.costRatio]=Double.toString(cost/result.costSum);
+                csvData[i][col.delayRatio]=Double.toString(delay/result.delaySum);
             }else{
                 System.out.println("没有结果");
             }
             System.out.println("++++++++++++++++");
-            kRSPResult result=solveWithGLPK(myGrap,startPoint,desPoint,spNum,maxDelay);
-            if(result!=null) {
-                System.out.println(result.costSum + "   " + result.delaySum);
-                System.out.println(result.usedEdges);
-                csvData[i][col.ILPCost] = Double.toString(result.costSum);
-                csvData[i][col.ILPDelay] = Double.toString(result.delaySum);
-            }
-            System.out.println("----------------");
         }
         CSVRecorder recorder=new CSVRecorder();
         recorder.writeToCSV("data.csv",csvData);
