@@ -255,13 +255,16 @@ def cycle_path_xor(cycle_path,paths,sp_num):
             v=path[index+1]
             graph.add_edge(u,v)
 
+    deleted_edge=[]
     for index in range(len(cycle_path)-1):
         u=cycle_path[index]
         v=cycle_path[index+1]
         if graph.has_edge(v,u):
             graph.remove_edge(v,u)
+            deleted_edge.append((u,v))
         else:
-            graph.add_edge(u,v)
+            if (u,v) not in deleted_edge:
+                graph.add_edge(u,v)
 
     #这里也可能出现有多条简单路径共用边的情况，这是错误的，所以取出一条边就删一条边 
     #但是边不一定会像path_xor一样删完，所以用路径条数限制
