@@ -115,7 +115,7 @@ public class ILPAlgorithm {
             parm.setPresolve(GLPKConstants.GLP_ON);
             ret=GLPK.glp_intopt(lp, parm);//这里必须使用MIP也就是混合整数线性规划来求解，否则结果会有小数
             //ret=GLPK.glp_exact(lp,parm);
-            if(true) {//测试时输出文件使用
+            if(false) {//测试时输出文件使用
                 GLPK.glp_write_mip(lp, "sol.sol");
                 glp_cpxcp p = new glp_cpxcp();
                 GLPK.glp_init_cpxcp(p);
@@ -180,8 +180,8 @@ public class ILPAlgorithm {
 
     public static void main(String args[]){
         GraphRandGen graphRandGen=new GraphRandGen();
-        MyGraph myGrap=graphRandGen.generateRandomGraph(50,800);
-        kRSPResult result=solveWithGLPK(myGrap,1,20,3,30);
+        MyGraph myGrap=graphRandGen.generateRandomGraph(60,800);
+        kRSPResult result=solveWithGLPK(myGrap,1,20,4,32);
         System.out.println(result.costSum+"   "+result.delaySum);
         System.out.println(result.usedEdges);
     }

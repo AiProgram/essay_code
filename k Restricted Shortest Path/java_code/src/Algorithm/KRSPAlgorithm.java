@@ -390,6 +390,12 @@ public class KRSPAlgorithm {
                 cycle=getOriPath(cycle,nodeNum);
                 //当找到的环不可取时需要 继续寻找,不可取的原因见cyclePathXor函数
                 if(cyclePathXor(cycle,ksp,spNum)!=null) return cycle;
+                else {
+                    System.err.println("负圈不可用");
+                    System.err.println(ksp);
+                    System.err.println(cycle);
+                    break;
+                }
             }
         }
         //等待编写负环使用代码
@@ -415,6 +421,11 @@ public class KRSPAlgorithm {
                             List<Integer>cycle=getOriPath(path.getVertexList(),nodeNum);//这里返回的环是点集，且首尾重复
                             //当找到的环不可取时继续寻找
                             if(cyclePathXor(cycle,ksp,spNum)!=null) return cycle;
+                            else{
+                                System.err.println("圈不可用");
+                                System.err.println(ksp);
+                                System.err.println(cycle);
+                            }
                         }
                     }catch (Exception e){
                         continue;
@@ -569,7 +580,7 @@ public class KRSPAlgorithm {
     public static void main(String args[]){
 
         KRSPAlgorithm algorithm=new KRSPAlgorithm();
-        int maxDelay=28;
+        int maxDelay=25;
         int spNum=3;
         int startPoint=1;
         int desPoint=20;
@@ -582,7 +593,7 @@ public class KRSPAlgorithm {
             csvData[i][col.maxDelay]=Integer.toString(maxDelay);
             csvData[i][col.graphId]=Integer.toString(i);
             GraphRandGen graphRandGen=new GraphRandGen();
-            MyGraph myGrap=graphRandGen.generateRandomGraph(50,600);
+            MyGraph myGrap=graphRandGen.generateRandomGraph(40,500);
             kRSPResult result=solveWithGLPK(myGrap,startPoint,desPoint,spNum,maxDelay);
             if(result!=null) {
                 System.out.println(result.costSum + "   " + result.delaySum);

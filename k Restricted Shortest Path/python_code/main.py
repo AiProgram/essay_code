@@ -8,7 +8,7 @@ if __name__=="__main__":
     start_point=1
     des_point=35
 
-    for i in range(100):
+    for i in range(30):
         graph=gg.getRandomGraph(node_num,edge_num)
         ksp=alg.get_kRSP(graph,start_point,des_point,sp_num,max_delay)
         if ksp is not None:

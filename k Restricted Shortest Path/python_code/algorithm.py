@@ -13,13 +13,16 @@ def paths_xor(paths,pathP):
             u=path[index]
             v=path[index+1]
             graph.add_edge(u,v)
+    deleted_edge=[]#记录已经存在过反向边的边，因为cycle中可能有重复的反向边
     for index in range(len(pathP)-1):
         u=pathP[index]
         v=pathP[index+1]
         if graph.has_edge(v,u):
             graph.remove_edge(v,u)
+            deleted_edge.append((u,v))
         else:
-            graph.add_edge(u,v)
+            if (u,v) not in deleted_edge:
+                graph.add_edge(u,v)
     
     #一次性输出的simple path 可能会有边相交，所以生成一条以后删除该条的边继续生成
     tmp=[]
@@ -209,9 +212,11 @@ def get_bicameral_cycle(reversed_graph,ksp,cost_bound,start_point,des_point,sp_n
         cycle=find_negative_cycle(aux_graph,get_split_node(start_point,upper_num,node_num))
         if cycle is not None:
             cycle=get_ori_path(cycle,node_num)
-            if cycle_path_xor(cycle,ksp,sp_num) is not None:
+            if cycle_path_xor(cycle,ksp,sp_num) is not None:#负圈可能会无效，待解决
                 print("负圈")
                 return  cycle
+            else:
+                return None
     #没有负环
     for node in reversed_graph.nodes():
         for upper_num_s in range(0,cost_bound):
@@ -323,6 +328,7 @@ def get_kRSP(graph,start_point,des_point,sp_num,max_delay):
             ksp_for_cost=cycle_path_xor(bicameral_cycle,ksp_for_cost,sp_num)
             if count_attr(graph,ksp_for_cost,"delay")<=max_delay:
                 up_bound_cost=mid_bound_cost
+                return ksp_for_cost
             else:
                 low_bound_cost=mid_bound_cost
         else:
