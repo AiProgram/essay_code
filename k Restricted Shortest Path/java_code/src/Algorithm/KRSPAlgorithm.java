@@ -387,9 +387,9 @@ public class KRSPAlgorithm {
             List<Integer>cycle=findNegativeCycle(auxGraph,getSplitNode(startPoint,upperNum,nodeNum));
             if(cycle!=null){
                 System.out.println("负环");
-                cycle=getOriPath(cycle,nodeNum);
+                List<Integer>tmp=getOriPath(cycle,nodeNum);
                 //当找到的环不可取时需要 继续寻找,不可取的原因见cyclePathXor函数
-                if(cyclePathXor(cycle,ksp,spNum)!=null) return cycle;
+                if(cyclePathXor(tmp,ksp,spNum)!=null) return tmp;
                 else {
                     System.err.println("负圈不可用");
                     System.err.println(ksp);
@@ -425,6 +425,7 @@ public class KRSPAlgorithm {
                                 System.err.println("圈不可用");
                                 System.err.println(ksp);
                                 System.err.println(cycle);
+                                System.err.println(path.getVertexList());
                             }
                         }
                     }catch (Exception e){
@@ -512,7 +513,7 @@ public class KRSPAlgorithm {
                 oriPath = oriPaths.get(0);
             }catch (Exception e){
                 //e.printStackTrace();
-                System.out.println("残余路径"+tmp);
+                System.out.println("残余路径"+ tmp);
                 return null;
             }
             List<Integer>tmpPath=oriPath.getVertexList();
@@ -584,7 +585,7 @@ public class KRSPAlgorithm {
         int spNum=3;
         int startPoint=1;
         int desPoint=20;
-        int times=50;
+        int times=100;
 
         String csvData[][]=new String[times][CSVCol.colNum];
         CSVCol col=new CSVCol();
