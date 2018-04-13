@@ -203,7 +203,32 @@ def find_negative_cycle(graph,start_point):
     else:
         return None
 
+def get_best_cycle(graph,ori_cycle):
+    """
+    用于去除可能存在的环中的环，去其中最好的简单环
+    graph必须是没有拆好点的反向后的辅助图
+    ori_cycle必须是带着上标的环
+    """
+    tmp_graph=nx.DiGraph()#用于在圈中寻找最好的圈的辅助图
+    best_cycle=[]
+    best_delay=INF
+    for node in ori_cycle:
+        tmp_graph.add_node(node)
+    for i in range(len(ori_cycle)-1):
+        u=ori_cycle[i]
+        v=ori_cycle[i+1]
+        delay=graph[u][v]["delay"]
+        tmp_graph.add_edge(u,v,delay=delay)
 
+    for cycle in nx.simple_cycles(tmp_graph):
+        cycle.append(cycle[0])#补上重复的点使之成为完整的环
+        tmp=[]
+        tmp.append(cycle)
+        cur_delay=count_attr(tmp_graph,tmp,"delay")
+        if cur_delay<best_delay:
+            best_cycle=cycle
+            best_delay=cur_delay
+    return best_cycle
 def get_bicameral_cycle(reversed_graph,ksp,cost_bound,start_point,des_point,sp_num):
     aux_graph=get_cycle_aux_graph(reversed_graph,cost_bound,des_point)
     node_num=reversed_graph.number_of_nodes()
@@ -212,11 +237,15 @@ def get_bicameral_cycle(reversed_graph,ksp,cost_bound,start_point,des_point,sp_n
         cycle=find_negative_cycle(aux_graph,get_split_node(start_point,upper_num,node_num))
         if cycle is not None:
             cycle=get_ori_path(cycle,node_num)
+            cycle=get_best_cycle(reversed_graph,cycle)
+            return cycle
+            """
             if cycle_path_xor(cycle,ksp,sp_num) is not None:#负圈可能会无效，待解决
                 print("负圈")
                 return  cycle
             else:
                 return None
+            """
     #没有负环
     for node in reversed_graph.nodes():
         for upper_num_s in range(0,cost_bound):
@@ -233,8 +262,11 @@ def get_bicameral_cycle(reversed_graph,ksp,cost_bound,start_point,des_point,sp_n
                     #获得的是辅助图中的路径，需要转成普通路径
                     cycle_path=nx.bellman_ford_path(aux_graph,s,t,weight="delay")
                     ori_cycle=get_ori_path(cycle_path,node_num)
+                    return get_best_cycle(reversed_graph,ori_cycle)
+                    """
                     if cycle_path_xor(ori_cycle,ksp,sp_num) is  not None:
                         return ori_cycle#这里返回的时环的简单点路径，且首尾点重复
+                    """
     return None
 
 def cycle_path_xor(cycle_path,paths,sp_num):
