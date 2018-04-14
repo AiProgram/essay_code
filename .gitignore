@@ -15,4 +15,5 @@ jgrapht-1.1.0
 *.gz
 *.txt
 *.csv
+*.xlsx
 tmp

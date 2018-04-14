@@ -9,6 +9,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.TarjanSimpleCycles;
+import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -423,14 +424,14 @@ public class KRSPAlgorithm {
     }
 
     public List<Integer>getBicameralCycle(MyGraph reverseGraph,List<List<Integer>>ksp,int costBound,int startPoint,int desPoint,int spNum){
-        MyGraph auxGraph=getCycleAuxGraph(reverseGraph,costBound,desPoint);
+        MyGraph auxGraph=getCycleAuxGraph(reverseGraph,costBound*2,desPoint);
         int nodeNum=reverseGraph.graph.vertexSet().size();
 
 
         //发现有负环时使用负环
-        for(int upperNum=0;upperNum<costBound+1;upperNum++)
-        {
-            List<Integer>cycle=findNegativeCycle(auxGraph,getSplitNode(startPoint,upperNum,nodeNum));
+//        for(int upperNum=0;upperNum<costBound+1;upperNum++)
+//        {
+            List<Integer>cycle=findNegativeCycle(auxGraph,getSplitNode(startPoint,costBound,nodeNum));
             if(cycle!=null){
                 System.out.println("负环");
                 List<Integer>tmp=getOriPath(cycle,nodeNum);
@@ -445,31 +446,33 @@ public class KRSPAlgorithm {
 //                    break;
 //                }
             }
-        }
+//        }
         //等待编写负环使用代码
         //auxGraph=getCycleAuxGraph(reverseGraph,costBound*2,desPoint);
         BellmanFordShortestPath<Integer,DefaultWeightedEdge>shortestPath=new BellmanFordShortestPath<>(auxGraph.graph);
         //没有负环时
         List<Integer>vertexList=new ArrayList<>(reverseGraph.graph.vertexSet());
+        auxGraph.setCurentWeight(MyGraph.CurentWeight.delay);
         for(int i=0;i<vertexList.size();i++)
         {
             int node=vertexList.get(i);
-            for(int upperNumS=0;upperNumS<costBound;upperNumS++)
-            {
-                //int upperNumT=costBound;
-                for(int upperNumT=upperNumS+1;upperNumT<costBound+1;upperNumT++)
-                {
-                    int s=getSplitNode(node,upperNumS,nodeNum);
-                    int t=getSplitNode(node,upperNumT,nodeNum);
-                    auxGraph.setCurentWeight(MyGraph.CurentWeight.delay);
-                    try{//可能存在不可到达的边
-                        double delaySum=shortestPath.getPathWeight(s,t);
-                        if(delaySum>0) continue;//没有改善时启用这条路径
-                        else{
-                            GraphPath<Integer,DefaultWeightedEdge>path=shortestPath.getPath(s,t);
-                            List<Integer>cycle=getOriPath(path.getVertexList(),nodeNum);//这里返回的环是点集，且首尾重复
-                            return getBestCycle(reverseGraph,cycle);
-                            //当找到的环不可取时继续寻找
+//            for(int upperNumS=0;upperNumS<costBound;upperNumS++)
+//            {
+            try {
+                int upperNumS = costBound;
+                int s = getSplitNode(node, upperNumS, nodeNum);
+                ShortestPathAlgorithm.SingleSourcePaths<Integer,DefaultWeightedEdge> sp=shortestPath.getPaths(s);
+                for (int upperNumT = upperNumS + 1; upperNumT < 2 * costBound + 1; upperNumT++) {
+                    int t = getSplitNode(node, upperNumT, nodeNum);
+                    GraphPath<Integer, DefaultWeightedEdge> path = sp.getPath(t);
+                    List<List<Integer>>tmp=new ArrayList<>();
+                    tmp.add(path.getVertexList());
+                    double delaySum = countAttr(auxGraph,tmp,Attr.delay);
+                    if (delaySum > 0) continue;//没有改善时启用这条路径
+                    else {
+                        cycle = getOriPath(path.getVertexList(), nodeNum);//这里返回的环是点集，且首尾重复
+                        return getBestCycle(reverseGraph, cycle);
+                        //当找到的环不可取时继续寻找
 //                            if(cyclePathXor(cycle,ksp,spNum)!=null) return cycle;
 //                            else{
 //                                getBestCycle(reverseGraph,cycle);
@@ -478,12 +481,13 @@ public class KRSPAlgorithm {
 //                                System.err.println(cycle);
 //                                System.err.println(path.getVertexList());
 //                            }
-                        }
-                    }catch (Exception e){
-                        continue;
                     }
+
                 }
+            }catch (Exception e){
+                continue;
             }
+//            }
 
         }
         return null;
@@ -631,11 +635,15 @@ public class KRSPAlgorithm {
     public static void main(String args[]){
 
         KRSPAlgorithm algorithm=new KRSPAlgorithm();
-        int maxDelay=40;
+        int nodeNum=200;
+        int edgeNum=10000;
+        int maxDelay=25;
         int spNum=3;
         int startPoint=20;
         int desPoint=30;
-        int times=50;
+        int times=10;
+        long startTime;
+        long  endTime;
 
         String csvData[][]=new String[times][CSVCol.colNum];
         CSVCol col=new CSVCol();
@@ -644,16 +652,23 @@ public class KRSPAlgorithm {
             csvData[i][col.maxDelay]=Integer.toString(maxDelay);
             csvData[i][col.graphId]=Integer.toString(i);
             GraphRandGen graphRandGen=new GraphRandGen();
-            MyGraph myGrap=graphRandGen.generateRandomGraph(100,1000);
+            MyGraph myGrap=graphRandGen.generateRandomGraph(nodeNum,edgeNum);
+            startTime=System.currentTimeMillis();
             kRSPResult result=solveWithGLPK(myGrap,startPoint,desPoint,spNum,maxDelay);
+            endTime=System.currentTimeMillis();
             if(result!=null) {
                 System.out.println(result.costSum + "   " + result.delaySum);
                 System.out.println(result.usedEdges);
                 csvData[i][col.ILPCost] = Double.toString(result.costSum);
                 csvData[i][col.ILPDelay] = Double.toString(result.delaySum);
             }
+            csvData[i][col.ILPRunTime]=Double.toString((endTime-startTime)/1000.0);
             System.out.println("----------------");
+
+
+            startTime=System.currentTimeMillis();
             List<List<Integer>>ksp=algorithm.getKSP(myGrap,startPoint,desPoint,spNum,maxDelay);
+            endTime=System.currentTimeMillis();
             if(ksp!=null)
             {
                 System.out.println(ksp);
@@ -668,7 +683,10 @@ public class KRSPAlgorithm {
             }else{
                 System.out.println("没有结果");
             }
+            csvData[i][col.newAlgRunTime]=Double.toString((endTime-startTime)/1000.0);
             System.out.println("++++++++++++++++");
+            csvData[i][col.nodeNum]=Integer.toString(nodeNum);
+            csvData[i][col.edgeNum]=Integer.toString(edgeNum);
         }
         CSVRecorder recorder=new CSVRecorder();
         recorder.writeToCSV("data.csv",csvData);
