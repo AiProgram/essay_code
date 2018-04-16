@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ILPAlgorithm {
-    public static kRSPResult solveWithGLPK(MyGraph myGraph,int startPoint,int desPoint,int pathNum,int maxDelay)
+    public  kRSPResult solveWithGLPK(MyGraph myGraph,int startPoint,int desPoint,int pathNum,int maxDelay)
     {
         int ret;
         kRSPResult result;
@@ -133,13 +133,14 @@ public class ILPAlgorithm {
                 System.out.println("The problem could not be solved");
                 return null;
             }
-
         }catch (Exception e){
             e.printStackTrace();
             ret=-1;
             return null;
         }
+        GLPK.glp_delete_prob(lp);
         return result;
+
     }
 
     static kRSPResult write_lp_solution(glp_prob lp) {//获取lp最后的结果
@@ -181,7 +182,8 @@ public class ILPAlgorithm {
     public static void main(String args[]){
         GraphRandGen graphRandGen=new GraphRandGen();
         MyGraph myGrap=graphRandGen.generateRandomGraph(60,800);
-        kRSPResult result=solveWithGLPK(myGrap,1,20,4,32);
+        ILPAlgorithm algorithm=new ILPAlgorithm();
+        kRSPResult result=algorithm.solveWithGLPK(myGrap,1,20,4,32);
         System.out.println(result.costSum+"   "+result.delaySum);
         System.out.println(result.usedEdges);
     }

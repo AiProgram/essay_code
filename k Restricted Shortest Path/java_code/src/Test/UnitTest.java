@@ -1,10 +1,9 @@
 package Test;
 
-import Algorithm.KRSPAlgorithm;
+import Algorithm.KRSPAlgBaseOnCost;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 public class UnitTest {
@@ -24,7 +23,7 @@ public class UnitTest {
 
         Integer cycle[]={0, 14, 37, 30, 13, 1, 6, 37, 30, 0};
         List<Integer> cycleList=Arrays.asList(cycle);
-        KRSPAlgorithm alg=new KRSPAlgorithm();
+        KRSPAlgBaseOnCost alg=new KRSPAlgBaseOnCost();
         List<List<Integer>> result= alg.cyclePathXor(cycleList,paths,40);
     }
 }

@@ -30,7 +30,7 @@ public class GraphRandGen {
         while(eit.hasNext()){
             DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
             int cost=random.nextInt(2)+1;
-            int delay=random.nextInt(9)+1;
+            int delay=random.nextInt(2)+1;
 
             myGraph.graph.setEdgeWeight(edge,cost);
             myGraph.costMap.put(edge,cost);
