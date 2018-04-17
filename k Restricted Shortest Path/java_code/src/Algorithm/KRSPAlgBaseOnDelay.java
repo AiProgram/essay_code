@@ -1,8 +1,6 @@
 package Algorithm;
 
-import GraphIO.CSVCol;
-import GraphIO.CSVRecorder;
-import GraphIO.GraphRandGen;
+import GraphIO.*;
 import GraphStructure.MyGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.cycle.TarjanSimpleCycles;
@@ -211,8 +209,6 @@ public class KRSPAlgBaseOnDelay {
                 int u=path.get(index);
                 int v=path.get(index+1);
                 DefaultWeightedEdge edge=graph.graph.getEdge(u,v);
-//                if(!graph.graph.containsEdge(edge))
-//                    System.out.println("找不到边");
                 if(attr==Attr.cost) sum+=graph.costMap.get(edge);
                 else sum+=graph.delayMap.get(edge);
             }
@@ -420,28 +416,6 @@ public class KRSPAlgBaseOnDelay {
         MyGraph auxGraph=getCycleAuxGraph(reverseGraph,delayBound*2,desPoint);
         int nodeNum=reverseGraph.graph.vertexSet().size();
 
-
-        //发现有负环时使用负环
-//        for(int upperNum=0;upperNum<costBound+1;upperNum++)
-//        {
-//        List<Integer>cycle=findNegativeCycle(auxGraph,getSplitNode(startPoint,costBound,nodeNum));
-//        if(cycle!=null){
-//            System.out.println("负环");
-//            List<Integer>tmp=getOriPath(cycle,nodeNum);
-//            return getBestCycle(reverseGraph,tmp);
-            //当找到的环不可取时需要 继续寻找,不可取的原因见cyclePathXor函数
-//                if(cyclePathXor(tmp,ksp,spNum)!=null) return tmp;
-//                else {
-//                    getBestCycle(reverseGraph,tmp);
-//                    System.err.println("负圈不可用");
-//                    System.err.println(ksp);
-//                    System.err.println(cycle);
-//                    break;
-//                }
-//        }
-//        }
-        //等待编写负环使用代码
-        //auxGraph=getCycleAuxGraph(reverseGraph,costBound*2,desPoint);
         BellmanFordShortestPath<Integer,DefaultWeightedEdge>shortestPath=new BellmanFordShortestPath<>(auxGraph.graph);
         //没有负环时
         List<Integer>vertexList=new ArrayList<>(reverseGraph.graph.vertexSet());
@@ -449,8 +423,6 @@ public class KRSPAlgBaseOnDelay {
         for(int i=0;i<vertexList.size();i++)
         {
             int node=vertexList.get(i);
-//            for(int upperNumS=0;upperNumS<costBound;upperNumS++)
-//            {
             try {
                 int upperNumS = delayBound;
                 int s = getSplitNode(node, upperNumS, nodeNum);
@@ -458,33 +430,17 @@ public class KRSPAlgBaseOnDelay {
                 for (int upperNumT = 0; upperNumT <upperNumS; upperNumT++) {
                     int t = getSplitNode(node, upperNumT, nodeNum);
                     GraphPath<Integer, DefaultWeightedEdge> path = sp.getPath(t);
-//                    List<List<Integer>>tmp=new ArrayList<>();
-//                    tmp.add(path.getVertexList());
-//                    double costSum = countAttr(auxGraph,tmp,Attr.cost);
-//                    if (costSum > 0) continue;//没有改善时启用这条路径
-//                    else {
                     List<Integer>cycle = getOriPath(path.getVertexList(), nodeNum);//这里返回的环是点集，且首尾重复
                     cycle=getBestCycle(reverseGraph,cycle);
                     List<List<Integer>>tmpPaths=cyclePathXor(cycle,ksp,spNum);
                     if(countAttr(oriGraph,tmpPaths,Attr.cost)>maxCost) continue;
                     else
                     return cycle;
-                        //当找到的环不可取时继续寻找
-//                            if(cyclePathXor(cycle,ksp,spNum)!=null) return cycle;
-//                            else{
-//                                getBestCycle(reverseGraph,cycle);
-//                                System.err.println("圈不可用");
-//                                System.err.println(ksp);
-//                                System.err.println(cycle);
-//                                System.err.println(path.getVertexList());
-//                            }
-//                    }
 
                 }
             }catch (Exception e){
                 continue;
             }
-//            }
 
         }
         return null;
@@ -594,18 +550,12 @@ public class KRSPAlgBaseOnDelay {
         if(totalDelay<=maxDelay)//提前结束，已经找到结果
             return kspForCost;
 
-//        int lowBoundCost=countAttr(graph,kspForCost,Attr.cost);
-//        int upBoundCost=countAttr(graph,kspForDelay,Attr.cost);
         int maxCost=countAttr(graph,kspForDelay,Attr.cost);
         while(true)
         {
 //            System.out.println("bound: "+lowBoundCost+"-----"+upBoundCost);
             System.out.println("current delay:  "+countAttr(graph,kspForCost,Attr.delay)+" current cost: "+countAttr(graph,kspForCost,Attr.cost));
             System.out.println("curPath:  "+kspForCost);
-            //此处利用二分法缩短costbound
-//            int midCostBound=(lowBoundCost+upBoundCost)/2;
-//            if(midCostBound==lowBoundCost)//不然会死循环
-//                break;
             MyGraph reverseGraph=getAllReverseGraph(graph,kspForCost);
             int curCost=countAttr(graph,kspForCost,Attr.cost);
             int curDelay=countAttr(graph,kspForCost,Attr.delay);
@@ -633,12 +583,16 @@ public class KRSPAlgBaseOnDelay {
         int spNum=5;
         int startPoint=20;
         int desPoint=30;
-        int times=50;
+        int times=1;
         long startTime;
         long  endTime;
 
         GraphRandGen graphRandGen=new GraphRandGen();
         MyGraph myGrap=graphRandGen.generateRandomGraph(nodeNum,edgeNum);
+
+        GraphWriter writer=new GraphWriter();
+        writer.saveGraphToJson(myGrap,"test.json");
+
         String csvData[][]=new String[times][CSVCol.colNum];
         ILPAlgorithm ilpAlgorithm=new ILPAlgorithm();
         CSVCol col=new CSVCol();
