@@ -652,7 +652,7 @@ public class KRSPAlgBaseOnCost {
             endTime=System.currentTimeMillis();
             if(result!=null) {
                 System.out.println(result.costSum + "   " + result.delaySum);
-                System.out.println(result.usedEdges);
+                System.out.println(result.paths);
                 csvData[i][col.ILPCost] = Double.toString(result.costSum);
                 csvData[i][col.ILPDelay] = Double.toString(result.delaySum);
             }

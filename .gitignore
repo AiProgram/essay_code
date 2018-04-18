@@ -5,6 +5,7 @@ partial_disjoint_path/java_code/result
 partial_disjoint_path/java_code/out
 internship_fzu/.idea
 internship_fzu/out
+k Restricted Shortest Path/collect_data
 *.json
 *.log
 *.class

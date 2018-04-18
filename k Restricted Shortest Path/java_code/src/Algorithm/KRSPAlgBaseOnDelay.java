@@ -577,40 +577,46 @@ public class KRSPAlgBaseOnDelay {
     public static void main(String args[]){
 
         KRSPAlgBaseOnDelay algorithm=new KRSPAlgBaseOnDelay();
-        int nodeNum=500;
-        int edgeNum=40000;
-        int maxDelay=15;
+        int nodeNum=400;
+        int edgeNum=16000;
+        int maxDelay=20;
         int spNum=5;
         int startPoint=20;
-        int desPoint=30;
-        int times=1;
+        int desPoint=40;
+        int times=100;
         long startTime;
         long  endTime;
 
-        GraphRandGen graphRandGen=new GraphRandGen();
-        MyGraph myGrap=graphRandGen.generateRandomGraph(nodeNum,edgeNum);
+
 
         GraphWriter writer=new GraphWriter();
-        writer.saveGraphToJson(myGrap,"test.json");
+
 
         String csvData[][]=new String[times][CSVCol.colNum];
         ILPAlgorithm ilpAlgorithm=new ILPAlgorithm();
         CSVCol col=new CSVCol();
         for(int i=0;i<times;i++)
         {
-            Random random=new Random();
-            startPoint=random.nextInt(nodeNum);
-            desPoint=random.nextInt(nodeNum);
+            GraphRandGen graphRandGen=new GraphRandGen();
+            MyGraph myGrap=graphRandGen.generateRandomGraph(nodeNum,edgeNum);
+            String graphFileName=nodeNum+"-"+edgeNum+"-"+i+".json";
+            writer.saveGraphToJson(myGrap,graphFileName);
+
             csvData[i][col.maxDelay]=Integer.toString(maxDelay);
             csvData[i][col.graphId]=Integer.toString(i);
+            csvData[i][col.startPoint]=Integer.toString(startPoint);
+            csvData[i][col.desPoint]=Integer.toString(desPoint);
+            csvData[i][col.graphFile]=graphFileName;
+
             startTime=System.currentTimeMillis();
             kRSPResult result=ilpAlgorithm.solveWithGLPK(myGrap,startPoint,desPoint,spNum,maxDelay);
             endTime=System.currentTimeMillis();
             if(result!=null) {
                 System.out.println(result.costSum + "   " + result.delaySum);
-                System.out.println(result.usedEdges);
+                System.out.println(result.paths);
                 csvData[i][col.ILPCost] = Double.toString(result.costSum);
                 csvData[i][col.ILPDelay] = Double.toString(result.delaySum);
+                csvData[i][col.ILPPath]=result.paths.toString();
             }
             csvData[i][col.ILPRunTime]=Double.toString((endTime-startTime)/1000.0);
             System.out.println("----------------");
@@ -630,6 +636,7 @@ public class KRSPAlgBaseOnDelay {
                 csvData[i][col.newAlgDelay]=Integer.toString(delay);
                 csvData[i][col.costRatio]=Double.toString(cost/result.costSum);
                 csvData[i][col.delayRatio]=Double.toString(delay/result.delaySum);
+                csvData[i][col.newAlgPath]=ksp.toString();
             }else{
                 System.out.println("没有结果");
             }

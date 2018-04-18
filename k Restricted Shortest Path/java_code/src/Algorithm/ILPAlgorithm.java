@@ -2,11 +2,16 @@ package Algorithm;
 
 import GraphIO.GraphRandGen;
 import GraphStructure.MyGraph;
+import com.sun.jdi.IntegerType;
 import org.gnu.glpk.*;
+import org.jgrapht.GraphPath;
+import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -126,7 +131,7 @@ public class ILPAlgorithm {
 
             // 获得结果
             if (ret == 0) {
-                result=write_lp_solution(lp);
+                result=write_lp_solution(lp,myGraph,edgeList,startPoint,desPoint);
                 if(GLPK.glp_mip_status(lp)!=GLPKConstants.GLP_OPT)//问题运行成功但是没有达到要求
                     return null;//0表示没有结果，因为实际情况不会为0
             } else {
@@ -143,7 +148,7 @@ public class ILPAlgorithm {
 
     }
 
-    static kRSPResult write_lp_solution(glp_prob lp) {//获取lp最后的结果
+    static kRSPResult write_lp_solution(glp_prob lp,MyGraph graph,List<DefaultWeightedEdge>graphEdgeList,int startPoint,int desPoint) {//获取lp最后的结果
         int i;
         int n;
         String name;
@@ -169,14 +174,47 @@ public class ILPAlgorithm {
         result.delaySum=val;
 
         n = GLPK.glp_get_num_cols(lp);//用于提取delay总和
+        List<DefaultWeightedEdge>edgeList=new ArrayList<>();
         for (i = 1; i <= n; i++) {
             name = GLPK.glp_get_col_name(lp, i);
             val = GLPK.glp_mip_col_val(lp, i);
             //System.out.println(name+"  "+val);
             int edgeIndex=Integer.parseInt(name.substring(1));//提取边的编号,注意这里同样从1开始
-            if(val>0) result.usedEdges.add(edgeIndex);
+            if(val>0) edgeList.add(graphEdgeList.get(i-1));
         }
+        result.paths=getPaths(graph,edgeList,startPoint,desPoint);
         return result;
+    }
+
+    static   List<List<Integer>> getPaths(MyGraph graph,List<DefaultWeightedEdge> edgeList,int startPoint,int desPoint){
+        MyGraph myGraph=new MyGraph();
+        Iterator iterator=edgeList.iterator();
+        while(iterator.hasNext())
+        {
+            DefaultWeightedEdge edge=(DefaultWeightedEdge)iterator.next();
+            int source=graph.graph.getEdgeSource(edge);
+            int target=graph.graph.getEdgeTarget(edge);
+            myGraph.graph.addVertex(source);
+            myGraph.graph.addVertex(target);
+            myGraph.addNewEdge(source,target,0,0);
+        }
+        //一次输出的simple path可能会有边相交，所以生成一条以后删除这条边继续生成
+        List<List<Integer>>tmp=new ArrayList<>();
+        while(myGraph.graph.edgeSet().size()>0){
+            AllDirectedPaths<Integer,DefaultWeightedEdge> allDirectedPaths=new AllDirectedPaths<>(myGraph.graph);
+            List<GraphPath<Integer,DefaultWeightedEdge>> oriPaths=allDirectedPaths.getAllPaths(startPoint,desPoint,true,null);
+            GraphPath<Integer,DefaultWeightedEdge> oriPath=oriPaths.get(0);
+            List<Integer>tmpPath=oriPath.getVertexList();
+            tmp.add(tmpPath);
+            System.out.println(tmpPath);
+            for(int i=0;i<tmpPath.size()-1;i++)
+            {
+                int u=tmpPath.get(i);
+                int v=tmpPath.get(i+1);
+                myGraph.removeAllEdges(u,v);
+            }
+        }
+        return tmp;
     }
 
     public static void main(String args[]){
@@ -185,6 +223,6 @@ public class ILPAlgorithm {
         ILPAlgorithm algorithm=new ILPAlgorithm();
         kRSPResult result=algorithm.solveWithGLPK(myGrap,1,20,4,32);
         System.out.println(result.costSum+"   "+result.delaySum);
-        System.out.println(result.usedEdges);
+        System.out.println(result.paths);
     }
 }
