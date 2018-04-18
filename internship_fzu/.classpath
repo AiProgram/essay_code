@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="glpk-4.64/examples/java"/>
+	<classpathentry kind="src" path="x86_win32">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="E:/ProgramFiles/CPLEX/cplex/bin/x86_win32"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" path="glpk-4.64/w32"/>
+	<classpathentry kind="src" path="src">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="D:/PythonProject/Essays/code/internship_fzu/glpk-4.64/w32"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="glpk-4.64/w32/glpk-java-javadoc.jar"/>
+	<classpathentry kind="lib" path="glpk-4.64/w32/glpk-java-sources.jar"/>
+	<classpathentry kind="lib" path="glpk-4.64/w32/glpk-java.jar"/>
+	<classpathentry kind="lib" path="glpk-4.64/w64/glpk-java-javadoc.jar"/>
+	<classpathentry kind="lib" path="glpk-4.64/w64/glpk-java-sources.jar"/>
+	<classpathentry kind="lib" path="glpk-4.64/w64/glpk-java.jar"/>
+	<classpathentry kind="lib" path="lib/antlr4-runtime-4.6.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.5.jar"/>
+	<classpathentry kind="lib" path="lib/cplex.jar"/>
+	<classpathentry kind="lib" path="lib/javacsv-2.0.jar"/>
+	<classpathentry kind="lib" path="lib/jgraph-5.13.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/jgrapht-core-1.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jgrapht-demo-1.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jgrapht-ext-1.1.0-uber.jar"/>
+	<classpathentry kind="lib" path="lib/jgrapht-ext-1.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jgrapht-io-1.1.0-uber.jar"/>
+	<classpathentry kind="lib" path="lib/jgrapht-io-1.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jgraphx-2.0.0.1.jar"/>
+	<classpathentry kind="output" path="out/production/internship_fzu"/>
+</classpath>
