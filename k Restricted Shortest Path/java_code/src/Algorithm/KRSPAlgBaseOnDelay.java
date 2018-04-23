@@ -577,8 +577,8 @@ public class KRSPAlgBaseOnDelay {
     public static void main(String args[]){
 
         KRSPAlgBaseOnDelay algorithm=new KRSPAlgBaseOnDelay();
-        int nodeNum=400;
-        int edgeNum=16000;
+        int nodeNum=900;
+        int edgeNum=81000;
         int maxDelay=20;
         int spNum=5;
         int startPoint=20;
@@ -644,7 +644,8 @@ public class KRSPAlgBaseOnDelay {
             System.out.println("++++++++++++++++");
             csvData[i][col.nodeNum]=Integer.toString(nodeNum);
             csvData[i][col.edgeNum]=Integer.toString(edgeNum);
-            //System.gc();
+
+            if(i%10==0)System.gc();
         }
         CSVRecorder recorder=new CSVRecorder();
         recorder.writeToCSV("data.csv",csvData);

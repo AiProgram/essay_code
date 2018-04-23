@@ -24,7 +24,7 @@ import static java.lang.StrictMath.round;
 public class NewAlg {
     static double INFINITY=1<<30;
     public static MyGraph getResidualGraph(MyGraph myGraph,int scale){
-        //鎵惧埌鏈�鐭矾寰�
+        //找到最短路径时
         int nodeNum=0;
         int edgeNum=0;
         int startPoint=myGraph.startPoint;
@@ -41,14 +41,14 @@ public class NewAlg {
             BellmanFordShortestPath<Integer,DefaultWeightedEdge> bellmanFordShortestPath=new BellmanFordShortestPath<>(myGraph.graph);
             myGraph.shortestPath=bellmanFordShortestPath.getPath(startPoint,sinkPoint);
         }catch (Exception e){
-            System.out.println("鎵句笉鍒版渶鐭矾寰勶紝鍙兘鏄袱鐐归棿涓嶈仈閫�");
+            System.out.println("找不到最短路径，可能是两点间不联通");
             return null;
         }
 
-        //浜х敓鐐瑰垎绂荤殑浣欏浘
-        //鎶奊涓墍鏈変笉鍦≒涓竟鍔犲叆G鈥樹腑
+        //产生点分离的余图
+        //把G中所有不在P中边加入G‘中
 
-        //棣栧厛澶嶅埗G鍒癎鈥樹腑
+        //首先复制G到G‘中
         MyGraph residualGraph=new MyGraph();
         residualGraph.costMap=new HashMap<>();
         residualGraph.graph=new DefaultDirectedWeightedGraph(DefaultWeightedEdge.class);
@@ -65,7 +65,7 @@ public class NewAlg {
             residualGraph.graph.addVertex(v);
         }
 
-        //瀵逛簬G涓殑姣忎竴鏉¤竟锛岄兘灏濊瘯鍔犲叆鍒癎鈥欎腑锛屼絾鏄鐐硅鍒犻櫎鐨勬坊鍔犱細鏃犳晥
+        //对于G中的每一条边，都尝试加入到G’中，但是端点被删除的添加会无效
         while(eit.hasNext()){
             DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
             int source=(int)myGraph.graph.getEdgeSource(edge);
@@ -76,14 +76,14 @@ public class NewAlg {
 
         if(myGraph.shortestPath.getLength()==1) residualGraph.graph.removeEdge(startPoint,sinkPoint);
 
-        //瀵逛簬shortestPath涓殑姣忎竴涓腑闂寸偣(闄や簡璧峰鐐瑰拰缁堢偣浠ュ)閮芥妸杈�(v1,v2)銆�(v2,v1)鍔犲叆锛岃�屼笖鍔犱笂weight鍜宑ost
+        //对于shortestPath中的每一个中间点(除了起始点和终点以外)都把边(v1,v2)、(v2,v1)加入，而且加上weight和cost
         vit=residualGraph.shortestPath.getVertexList().iterator();
         while(vit.hasNext()){
             int v=(int)vit.next();
             if(v!=startPoint&&v!=sinkPoint){
                 int v1=v+nodeNum;
                 int v2=v+2*nodeNum;
-                residualGraph.graph.addVertex(v1);//杩欓噷蹇呴』杈规坊鍔犳垚鍔燂紝閬垮厤鍑虹幇鐐逛笉瀛樺湪鐨勬儏鍐�
+                residualGraph.graph.addVertex(v1);//这里必须边添加成功，避免出现点不存在的情况
                 residualGraph.graph.addVertex(v2);
                 residualGraph.addNewEdge(v1,v2,0,scale);
                 residualGraph.addNewEdge(v2,v1,0,0);
@@ -98,7 +98,7 @@ public class NewAlg {
             int u=(int)myGraph.graph.getEdgeSource(edge);
             int v=(int)myGraph.graph.getEdgeTarget(edge);
             List<Integer> vList=myGraph.shortestPath.getVertexList();
-            //褰撹竟(source,target)鍦╯hortestPath涓椂
+            //当边(source,target)在shortestPath中时
             if(vList.contains(u)&&vList.contains(v)&&(vList.indexOf(v)-vList.indexOf(u)==1)){
                 int u2=u;
                 int v1=v;
@@ -111,7 +111,7 @@ public class NewAlg {
                 residualGraph.graph.addVertex(u2);
                 residualGraph.addNewEdge(v1,u2,-w,0);
             }else {
-                //褰搒ource鏄痵hortestPath涓殑鐐规椂
+                //当source是shortestPath中的点时
                 if(vList.contains(u)&&u!=startPoint&&u!=sinkPoint)
                 {
                     int u2=u+2*nodeNum;
@@ -125,7 +125,7 @@ public class NewAlg {
                         residualGraph.addNewEdge(u2,v,w,0);
                     }
                 }
-                //褰搕arget鏄痵hortestPath涓殑鐐规椂
+                //当target是shortestPath中的点时
                 if(vList.contains(v)&&v!=startPoint&&v!=sinkPoint)
                 {
                     int v1=v+nodeNum;
@@ -156,7 +156,7 @@ public class NewAlg {
         double dynMat[][]=new double[nodeNum*3][maxComVertex+1];
         int min_node=0;
 
-        //鍒濆鍖�
+        //初始化
         Iterator vit=graph.vertexSet().iterator();
         Iterator eit;
         while(vit.hasNext()){
@@ -169,7 +169,7 @@ public class NewAlg {
             dynMat[startPoint][mcv]=0;
 
         boolean improveFlag=true;
-        //涓昏绠楁硶
+        //主要算法
         for(int mcv=1;mcv<maxComVertex+1;mcv++)
         {
             vit=graph.vertexSet().iterator();
@@ -217,7 +217,7 @@ public class NewAlg {
 
     public static void main(String args[]){
         int time=1;
-        String resultArr[][]=new String[time][CSVCol.colNum];//鐢ㄤ簬璁板綍绠楁硶杩愯鏁版嵁璁板綍杩涘叆csv琛ㄦ牸涓�
+        String resultArr[][]=new String[time][CSVCol.colNum];//用于记录算法运行数据记录进入csv表格中
         long startTime;
         long endTime;
 

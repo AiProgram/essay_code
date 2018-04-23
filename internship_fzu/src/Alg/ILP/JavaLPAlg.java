@@ -136,12 +136,12 @@ public class JavaLPAlg {
         double result=0;
         try{
 
-            //寤虹珛闂
+            //建立问题
             lp = GLPK.glp_create_prob();
             System.out.println("Problem created");
             GLPK.glp_set_prob_name(lp, "myProblem");
 
-            //瀹氫箟鍙橀噺
+            //定义变量
             GLPK.glp_add_cols(lp, edgeNumber);
             for(int i=1;i<=edgeNumber;i++)
             {
@@ -150,16 +150,16 @@ public class JavaLPAlg {
                 GLPK.glp_set_col_name(lp,i,"x"+i);
             }
 
-            //璁剧疆绾︽潫
+            //设置约束
 
-            //鐢宠鍐呭瓨
+            //申请内存
             index=GLPK.new_intArray(edgeNumber);
             val=GLPK.new_doubleArray(edgeNumber);
 
-            //棰勫厛璁剧疆绾︽潫鐨勬潯鏁�
+            //预先设置约束条数
             GLPK.glp_add_rows(lp,nodeNumber);
 
-            //鍏蜂綋璁剧疆绾︽潫
+            //具体设置约束
             Iterator vit=graph.vertexSet().iterator();
             for(int i=1,j=1;i<=nodeNumber;i++)
             {
@@ -211,11 +211,11 @@ public class JavaLPAlg {
             }
             GLPK.glp_set_mat_row(lp,nodeNumber,edgeNumber,index,val);
 
-            //閲婃斁鍐呭瓨
+            //释放内存
             GLPK.delete_intArray(index);
             GLPK.delete_doubleArray(val);
 
-            //璁剧疆鏈�鍊煎紡
+            //设置最值式
             GLPK.glp_set_obj_name(lp, "result");
             GLPK.glp_set_obj_dir(lp, GLPKConstants.GLP_MIN);
             eit=graph.edgeSet().iterator();
@@ -226,7 +226,7 @@ public class JavaLPAlg {
                 GLPK.glp_set_obj_coef(lp, i, graph.getEdgeWeight(edge));
             }
 
-            //瑙ｅ喅妯″瀷
+            //解决模型
 
 //            parm=new glp_iocp();
 //            GLPK.glp_init_iocp(parm);
@@ -239,13 +239,14 @@ public class JavaLPAlg {
 //                GLPK.glp_write_lp(lp, p, probId + ".lp");
 //            }
 
-            //鍒╃敤GLPK搴撹緭鍑簂p鏂囦欢鍚庡埄鐢╟plex姹傝В
+            //将GLPK改成cplex求解
             p=new glp_cpxcp();
             GLPK.glp_init_cpxcp(p);
             GLPK.glp_write_lp(lp, p,  "tmp.lp");
             GLPK.glp_delete_prob(lp);
             try{
                 IloCplex cplex=new IloCplex();
+                cplex.setParam(IloCplex.Param.Threads, 1);//为了与其他算法对比，设置为单线程
                 cplex.importModel("tmp.lp");
                 if ( cplex.solve() ) {
 //                	System.out.println("进入求解");
@@ -274,17 +275,17 @@ public class JavaLPAlg {
             }catch (Exception e){
                 e.printStackTrace();
             }
-            // 鑾峰緱缁撴灉
+            // 获得结果
 //            if (ret == 0) {
 //                result=write_lp_solution(lp);
-//                if(GLPK.glp_get_status(lp)!=GLPKConstants.GLP_OPT)//闂杩愯鎴愬姛浣嗘槸娌℃湁杈惧埌瑕佹眰
-//                    return 0;//0琛ㄧず娌℃湁缁撴灉锛屽洜涓哄疄闄呮儏鍐典笉浼氫负0
+//                if(GLPK.glp_get_status(lp)!=GLPKConstants.GLP_OPT)//问题运行成功但没有达到要求
+//                    return 0;//0表示没有结果，因为实际情况不会为0
 //            } else {
 //                System.out.println("The problem could not be solved");
 //                return -1;
 //            }
 //
-//            // 閲婃斁鍐呭瓨
+//            // 释放内存
 //            GLPK.glp_delete_prob(lp);
 
         }catch (Exception e){
@@ -297,7 +298,7 @@ public class JavaLPAlg {
 
     /**
      *
-     * 涓篒LP绠楁硶鎻愪緵G鈥橈紝G'鏄粠鍘熷鍥綠鍙樻崲杩囨潵鐨�
+     * 为ILP算法提供G‘，G是从原始图变换过来的
      * @param myGraph G
      *
      *
@@ -321,7 +322,7 @@ public class JavaLPAlg {
 
         lpGraph.graph.addVertex(startPoint);
         lpGraph.graph.addVertex(sinkPoint);
-        //鎴戜滑璁や负鐐圭殑id搴旇鍦�0鍜宯odeNum-1涔嬮棿
+        //我们认为点的id应该在0和nodeNum-1之间
         int nodeNum=myGraph.graph.vertexSet().size();
         Iterator vit=myGraph.graph.vertexSet().iterator();
         while(vit.hasNext()){
@@ -333,7 +334,7 @@ public class JavaLPAlg {
             }
         }
 
-        //鍦℅涓繘鍏鐨勮竟鐜板湪G鈥欎腑杩涘叆v1锛岃�岀寮�v鐨勮竟鐜板湪G鈥樹腑绂诲紑v2
+        //在G中进入v的边现在G’中进入v1，而离开v的边现在G‘中离开v2
         Iterator eit=myGraph.graph.edgeSet().iterator();
         while(eit.hasNext()){
             DefaultWeightedEdge edge=(DefaultWeightedEdge)eit.next();
@@ -348,10 +349,10 @@ public class JavaLPAlg {
             if(u==startPoint||u==sinkPoint) u2=u;
             else u2=u+nodeNum;
 
-            lpGraph.addNewEdge(u2,v1,w,0);//杩欓噷鏆傛椂浣跨敤鍏ㄥ眬鍙橀噺鍌ㄥ瓨cost锛屽洜涓鸿繖涓簱涓嶅厑璁稿崟鐙坊鍔犲睘鎬э紝鍚庨潰鍙互鏀硅繘
+            lpGraph.addNewEdge(u2,v1,w,0);//这里暂时使用全局变量储存cost，因为这个库不允许单独添加属性，后面可以改进
         }
 
-        //鍦℅鈥欎腑鍔犲叆杈�(v1,v2)骞朵笖瀹冪殑cost鏄�1鑰寃eight鏄�0
+        //在G’中加入边(v1,v2)并且它的cost是1而weight是0
         vit=myGraph.graph.vertexSet().iterator();
         while(vit.hasNext()){
             int node=(int)vit.next();
