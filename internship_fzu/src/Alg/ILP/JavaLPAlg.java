@@ -114,7 +114,10 @@ public class JavaLPAlg {
         return myGraph;
     }
 
-    public static double solveWithGLPK(ILPGraph myGraph,int probId){
+    public  static enum LPSolver{
+        GLPK,CPLEX
+    }
+    public static double solveWithGLPK(ILPGraph myGraph,int probId,LPSolver lpSolver){
         glp_prob lp;
         glp_iocp parm;
         glp_cpxcp p;
@@ -227,72 +230,60 @@ public class JavaLPAlg {
             }
 
             //解决模型
-
-//            parm=new glp_iocp();
-//            GLPK.glp_init_iocp(parm);
-//            parm.setPresolve(GLPKConstants.GLP_ON);
-//            ret=GLPK.glp_intopt(lp,parm);
-//            if(this.isTest) {//娴嬭瘯鏃惰緭鍑烘枃浠朵娇鐢�
-//                GLPK.glp_write_sol(lp, probId + ".sol");
-//                glp_cpxcp p = new glp_cpxcp();
-//                GLPK.glp_init_cpxcp(p);
-//                GLPK.glp_write_lp(lp, p, probId + ".lp");
-//            }
-
-            //将GLPK改成cplex求解
-            p=new glp_cpxcp();
-            GLPK.glp_init_cpxcp(p);
-            GLPK.glp_write_lp(lp, p,  "tmp.lp");
-            GLPK.glp_delete_prob(lp);
-            try{
-                IloCplex cplex=new IloCplex();
-                cplex.setParam(IloCplex.Param.Threads, 1);//为了与其他算法对比，设置为单线程
-                cplex.importModel("tmp.lp");
-                if ( cplex.solve() ) {
-//                	System.out.println("进入求解");
-//                    IloNumVar[][] var = new IloNumVar[1][];
-//                    IloRange[][]  rng = new IloRange[1][];
-//                    double[] x     = cplex.getValues(var[0]);
-//                    double[] slack = cplex.getSlacks(rng[0]);
-
-                    System.out.println("Solution status = " + cplex.getStatus());
-                    System.out.println("Solution value  = " + cplex.getObjValue());
-                    if(cplex.getStatus()==IloCplex.Status.Optimal)
-                    	return cplex.getObjValue();
-                    else
-                    	return -1;
-
-//                    for (int j = 0; j < x.length; ++j) {
-//                        System.out.println("Variable " + j + ": Value = " + x[j]);
-//                    }
-//
-//                    for (int i = 0; i < slack.length; ++i) {
-//                        System.out.println("Constraint " + i + ": Slack = " + slack[i]);
-//                    }
-                    
+            if(lpSolver==LPSolver.GLPK) {
+                parm = new glp_iocp();
+                GLPK.glp_init_iocp(parm);
+                parm.setPresolve(GLPKConstants.GLP_ON);
+                ret = GLPK.glp_intopt(lp, parm);
+                // 获得结果
+                if (ret == 0) {
+                    result = write_lp_solution(lp);
+                    if (GLPK.glp_mip_status(lp) != GLPKConstants.GLP_OPT) {//问题运行成功但没有达到要求
+                        System.err.println("error");
+                        GLPK.glp_delete_prob(lp);
+                        return 0;//0表示没有结果，因为实际情况不会为0
+                    }
+                    else {
+                        GLPK.glp_delete_prob(lp);
+                        return result;
+                    }
+                } else {
+                    // 释放内存
+                    GLPK.glp_delete_prob(lp);
+                    System.out.println("The problem could not be solved");
+                    return -1;
                 }
-                cplex.end();
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            // 获得结果
-//            if (ret == 0) {
-//                result=write_lp_solution(lp);
-//                if(GLPK.glp_get_status(lp)!=GLPKConstants.GLP_OPT)//问题运行成功但没有达到要求
-//                    return 0;//0表示没有结果，因为实际情况不会为0
-//            } else {
-//                System.out.println("The problem could not be solved");
-//                return -1;
-//            }
-//
-//            // 释放内存
-//            GLPK.glp_delete_prob(lp);
+            } else if (lpSolver == LPSolver.CPLEX) {
+                //将GLPK改成cplex求解
+                p = new glp_cpxcp();
+                GLPK.glp_init_cpxcp(p);
+                GLPK.glp_write_lp(lp, p, "tmp.lp");
+                GLPK.glp_delete_prob(lp);
+                try {
+                    IloCplex cplex = new IloCplex();
+                    cplex.setParam(IloCplex.Param.Threads, 1);//为了与其他算法对比，设置为单线程
+                    cplex.importModel("tmp.lp");
+                    if (cplex.solve()) {
+                        System.out.println("Solution status = " + cplex.getStatus());
+                        System.out.println("Solution value  = " + cplex.getObjValue());
+                        if (cplex.getStatus() == IloCplex.Status.Optimal)
+                            return cplex.getObjValue();
+                        else
+                            return -1;
 
+                    }
+                    cplex.end();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }catch (Exception e){
             e.printStackTrace();
             ret=1;
             return -1;
         }
+        //释放内存
+        GLPK.glp_delete_prob(lp);
         return result;
     }
 
@@ -378,34 +369,17 @@ public class JavaLPAlg {
         System.out.print(name);
         System.out.print(" = ");
         System.out.println(val);
-        n = GLPK.glp_get_num_cols(lp);
-        for (i = 1; i <= n; i++) {
-            name = GLPK.glp_get_col_name(lp, i);
-            val = GLPK.glp_mip_col_val(lp, i);
-            System.out.print(name);
-            System.out.print(" = ");
-            System.out.println(val);
-        }
+//        n = GLPK.glp_get_num_cols(lp);
+//        for (i = 1; i <= n; i++) {
+//            name = GLPK.glp_get_col_name(lp, i);
+//            val = GLPK.glp_mip_col_val(lp, i);
+//            System.out.print(name);
+//            System.out.print(" = ");
+//            System.out.println(val);
+//        }
         return val;
     }
     public void  test(){
-        String graphData=readJsonGraph("ori_100_1000_4_3.json");
-        MyGraph newGraph=parseJsonToGraph(graphData);
-        newGraph.startPoint=0;
-        newGraph.sinkPoint=10;
-        newGraph.maxComVertex=4;
-//        GraphRandomGenerator generator=new GraphRandomGenerator();
-//        MyGraph myGraph=generator.generateRandomGraph(400,5000);
-//        myGraph.startPoint=0;
-//        myGraph.sinkPoint=20;
-//        myGraph.maxComVertex=10;
-//        System.out.println(newGraph.graph.vertexSet().size());
-//        System.out.println(newGraph.graph.edgeSet().size());
-
-        ILPGraph lpGraph=getGraphForILP(newGraph);
-        System.out.println(lpGraph.graph.vertexSet().size());
-        System.out.println(lpGraph.graph.edgeSet().size());
-        solveWithGLPK(lpGraph,0);
     }
 
     public static  void main(String args[]){

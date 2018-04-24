@@ -310,7 +310,7 @@ public class NewAlg_backup {
 
             startTime=System.currentTimeMillis();
             ILPGraph graph1 = JavaLPAlg.getGraphForILP(myGraph);
-            double ILPResult=JavaLPAlg.solveWithGLPK(graph1,0);
+            double ILPResult=JavaLPAlg.solveWithGLPK(graph1,0, JavaLPAlg.LPSolver.GLPK);
             endTime=System.currentTimeMillis();
             long ILPRunTime=endTime-startTime;
 //
