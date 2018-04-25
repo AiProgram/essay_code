@@ -1,4 +1,4 @@
-import Alg.ILP.JavaLPAlg;
+import alg.ILP.JavaLPAlg;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

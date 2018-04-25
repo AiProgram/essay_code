@@ -1,23 +1,24 @@
-package Main;
+package main;
 
-import Alg.ILP.JavaLPAlg;
-import Alg.MWLD.MWLD;
-import Alg.NewAlg.NewAlg;
-import GraphIO.CSVCol;
-import GraphIO.CSVRecorder;
-import GraphIO.GraphRandomGenerator;
-import GraphIO.GraphWriter;
-import MyGraph.*;
+import alg.ILP.JavaLPAlg;
+import alg.MWLD.MWLD;
+import alg.NewAlg.NewAlg;
+import graphIO.CSVCol;
+import graphIO.CSVRecorder;
+import graphIO.GraphRandomGenerator;
+import graphIO.GraphWriter;
+import myGraph.ILPGraph;
+import myGraph.MyGraph;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static Alg.Util.Util.getSPWeight;
+import static alg.Util.Util.getSPWeight;
 import static java.lang.StrictMath.round;
 
 public class Main {
     public static void main(String args[]){
-        int time=10;
+        int time=100;
         String resultArr[][]=new String[time][CSVCol.colNum];//用于记录算法运行数据记录进入csv表格中
         long startTime;
         long endTime;
@@ -27,7 +28,7 @@ public class Main {
         for(int t=0;t<time;t++) {
             GraphRandomGenerator randomGenerator = new GraphRandomGenerator();
 //            String jsonStr= JavaLPAlg.readJsonGraph("graph.json");
-//            MyGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
+//            myGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
             MyGraph myGraph=randomGenerator.generateRandomGraph(40,500);
             myGraph.startPoint = 0;
             myGraph.sinkPoint = 10;

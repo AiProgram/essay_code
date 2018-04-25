@@ -1,6 +1,6 @@
-package GraphIO;
+package graphIO;
 
-import MyGraph.MyGraph;
+import myGraph.MyGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.json.JSONArray;
 import org.json.JSONObject;

@@ -1,7 +1,8 @@
-package Alg.ILP;
+package alg.ILP;
 
-import MyGraph.ILPGraph;
-import MyGraph.MyGraph;
+import myGraph.ILPGraph;
+import myGraph.MyGraph;
+import ilog.cplex.IloCplex;
 import org.gnu.glpk.*;
 import org.jgrapht.EdgeFactory;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
@@ -14,8 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.*;
-import ilog.concert.*;
-import ilog.cplex.*;
 
 public class JavaLPAlg {
 
@@ -230,7 +229,7 @@ public class JavaLPAlg {
             }
 
             //解决模型
-            if(lpSolver==LPSolver.GLPK) {
+            if(lpSolver==LPSolver.GLPK) {//使用GLPK作为lpsolver
                 parm = new glp_iocp();
                 GLPK.glp_init_iocp(parm);
                 parm.setPresolve(GLPKConstants.GLP_ON);
@@ -253,7 +252,7 @@ public class JavaLPAlg {
                     System.out.println("The problem could not be solved");
                     return -1;
                 }
-            } else if (lpSolver == LPSolver.CPLEX) {
+            } else if (lpSolver == LPSolver.CPLEX) {//使用CPLEX
                 //将GLPK改成cplex求解
                 p = new glp_cpxcp();
                 GLPK.glp_init_cpxcp(p);
@@ -279,7 +278,6 @@ public class JavaLPAlg {
             }
         }catch (Exception e){
             e.printStackTrace();
-            ret=1;
             return -1;
         }
         //释放内存

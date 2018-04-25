@@ -1,14 +1,14 @@
-package Alg.NewAlg;
+package alg.NewAlg;
 
-import Alg.ILP.JavaLPAlg;
-import Alg.MWLD.MWLD;
-import Alg.Util.Util;
-import GraphIO.CSVCol;
-import GraphIO.CSVRecorder;
-import GraphIO.GraphRandomGenerator;
-import GraphIO.GraphWriter;
-import MyGraph.ILPGraph;
-import MyGraph.MyGraph;
+import alg.ILP.JavaLPAlg;
+import alg.MWLD.MWLD;
+import alg.Util.Util;
+import graphIO.CSVCol;
+import graphIO.CSVRecorder;
+import graphIO.GraphRandomGenerator;
+import graphIO.GraphWriter;
+import myGraph.ILPGraph;
+import myGraph.MyGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
@@ -291,7 +291,7 @@ public class NewAlg_backup {
 
             GraphRandomGenerator randomGenerator = new GraphRandomGenerator();
 //            String jsonStr= JavaLPAlg.readJsonGraph("97.json");
-//            MyGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
+//            myGraph myGraph=JavaLPAlg.parseJsonToGraph(jsonStr);
             MyGraph myGraph=randomGenerator.generateRandomGraph(100,4000);
             myGraph.startPoint = 0;
             myGraph.sinkPoint = 5;

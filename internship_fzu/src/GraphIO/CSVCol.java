@@ -1,4 +1,4 @@
-package GraphIO;
+package graphIO;
 
 public class CSVCol {
     /**

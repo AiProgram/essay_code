@@ -1,25 +1,14 @@
-package Alg.NewAlg;
+package alg.NewAlg;
 
-import Alg.ILP.JavaLPAlg;
-import Alg.MWLD.MWLD;
-import GraphIO.CSVCol;
-import GraphIO.CSVRecorder;
-import GraphIO.GraphRandomGenerator;
-import GraphIO.GraphWriter;
-import MyGraph.ILPGraph;
-import MyGraph.MyGraph;
+import myGraph.MyGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
-import static Alg.Util.Util.getSPWeight;
-import static java.lang.StrictMath.round;
 
 public class NewAlg {
     static double INFINITY=1<<30;

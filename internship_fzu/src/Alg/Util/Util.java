@@ -1,4 +1,4 @@
-package Alg.Util;
+package alg.Util;
 
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;

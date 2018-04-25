@@ -1,4 +1,4 @@
-package MyGraph;
+package myGraph;
 
 import org.jgrapht.GraphPath;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;

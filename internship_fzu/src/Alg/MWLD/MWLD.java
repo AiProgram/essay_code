@@ -1,8 +1,8 @@
-package Alg.MWLD;
+package alg.MWLD;
 
-import Alg.NewAlg.NewAlg;
-import Alg.Util.Util;
-import MyGraph.MyGraph;
+import alg.NewAlg.NewAlg;
+import alg.Util.Util;
+import myGraph.MyGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
