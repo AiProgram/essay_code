@@ -1,7 +1,7 @@
 # δV-2EDSP算法java实现版
 ## 包 *myGraph*
-### **类** *MyGraph*
-+ `JGraphT`所提供的图最多只能在边上联系一种属性，本算法中图的边有多个属性，将`JGraphT`提供的图包装到*MyGraph*类中来保存属性信息，同时也可以储存算法的相关参数以及结果信息，方便算法的编写.
+### **类** *myGraph*
++ `JGraphT`所提供的图最多只能在边上联系一种属性，本算法中图的边有多个属性，将`JGraphT`提供的图包装到*myGraph*类中来保存属性信息，同时也可以储存算法的相关参数以及结果信息，方便算法的编写.
 
 **成员**
 + *graph*：默认使用`JGraphT`中提供的`DefaultDirectedWeightedGraph`也就是带有weight的有向非重复图
@@ -28,13 +28,13 @@ DefaultWeightedEdge addNewEdge(int source ,int target,double weight,int cost)
 + *weight*:这条边的weight属性
 + *cost*:这条边的cost属性
 ### **类** *ILPGraph*
-+ 线性规划算法需要输入允许平行边存在的图，这里除了*graph*成员与*MyGraph*不同以外，其他类似.
++ 线性规划算法需要输入允许平行边存在的图，这里除了*graph*成员与*myGraph*不同以外，其他类似.
 ---
 ## 包 *graphIO*
 ### **类** *GraphRandomGenerator*
 **方法**
 ```java
-MyGraph generateRandomGraph(int nodeNum, int edgeNum)
+myGraph generateRandomGraph(int nodeNum, int edgeNum)
 ```
 + 算法需要随机图进行测试,本方法返回生成的随机图，且边的属性也随机生成
 + *nodeNum*:随机生成图的顶点数
@@ -44,7 +44,7 @@ MyGraph generateRandomGraph(int nodeNum, int edgeNum)
 + *graphFolder*:用于储存图的文件的目录
 **方法**
 ```java
-boolean saveGraphToJson(MyGraph myGraph,String graphFileName)
+boolean saveGraphToJson(myGraph myGraph,String graphFileName)
 ```
 + 这个方法将会把输入的图转化成json格式，储存到指定的文件名的文件中,返回表示操作是否成功
 + *myGraph*:将要被储存的图
@@ -77,14 +77,14 @@ void saveToCSV(String csvFileName,String data[][])
 
 **方法**
 ```java
-MyGraph getResidualGraph(MyGraph myGraph,int scale)
+myGraph getResidualGraph(myGraph myGraph,int scale)
 ```
 + 本方法将原图处理成余图并返回余图，但是不修改原图，处理的参数均存放于*myGraph*中
 + *myGraph*:原图
 + *scale*:用于成比例放缩边的cost属性，这里全部使用*scale*为1
 
 ```java
-double RSPNoRecrusive(MyGraph myGraph)
+double RSPNoRecrusive(myGraph myGraph)
 ```
 + 本方法使用`RSP`算法寻找图中从起点到终点的受限制的最短路径，并返回这条路径的cost总和
 + `RSP`算法所需要的三个额外参数起点、终点、最大共同点数都存储在*myGraph*中
@@ -99,13 +99,13 @@ String readJsonGraph(String fileName)
 + *fileName*:读取的文件路径
 
 ```java
-MyGraph parseJsonToGraph(String jsonStr)
+myGraph parseJsonToGraph(String jsonStr)
 ```
 + 本方法接受json文本，将其转化为图的数据结构，并返回图
 + *jsonStr*:json图的文本
 
 ```java
-ILPGraph getGraphForILP(MyGraph myGraph)
+ILPGraph getGraphForILP(myGraph myGraph)
 ```
 + 本方法接受原始的图，处理后返回线性规划算法所使用的图
 + *myGraph*:原始的图以及其他参数
@@ -123,12 +123,12 @@ double solveWithGLPK(ILPGraph myGraph,int probId,LPSolver lpSolver)
 **方法**
 
 ```java
-double mwldALg(MyGraph myGraph)
+double mwldALg(myGraph myGraph)
 ```
 + `MWLD`算法的入口，返回算法结果
 
 ```java
-MyGraph mwldGetAuxGraph(DefaultDirectedWeightedGraph graph,int sinkPoint)
+myGraph mwldGetAuxGraph(DefaultDirectedWeightedGraph graph,int sinkPoint)
 ```
 + 将原图转化为算法需要的辅助图
 + *graph*:原图
