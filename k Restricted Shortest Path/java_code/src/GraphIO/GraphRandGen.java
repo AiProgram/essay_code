@@ -1,6 +1,6 @@
-package GraphIO;
+package graphIO;
 
-import GraphStructure.MyGraph;
+import graphStructure.MyGraph;
 import org.jgrapht.VertexFactory;
 import org.jgrapht.generate.GnmRandomGraphGenerator;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;

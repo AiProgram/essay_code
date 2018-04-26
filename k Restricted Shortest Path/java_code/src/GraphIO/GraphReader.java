@@ -1,13 +1,11 @@
-package GraphIO;
+package graphIO;
 
-import GraphStructure.MyGraph;
+import graphStructure.MyGraph;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 
 public class GraphReader {
     final String graphDataFolder="./graph_data/";

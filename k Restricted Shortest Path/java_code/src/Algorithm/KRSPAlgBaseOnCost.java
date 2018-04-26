@@ -1,9 +1,9 @@
-package Algorithm;
+package algorithm;
 
-import GraphIO.CSVCol;
-import GraphIO.CSVRecorder;
-import GraphIO.GraphRandGen;
-import GraphStructure.MyGraph;
+import graphIO.CSVCol;
+import graphIO.CSVRecorder;
+import graphIO.GraphRandGen;
+import graphStructure.MyGraph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.cycle.TarjanSimpleCycles;
 import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
@@ -626,63 +626,5 @@ public class KRSPAlgBaseOnCost {
         return kspForCost;
     }
     public static void main(String args[]){
-
-        KRSPAlgBaseOnCost algorithm=new KRSPAlgBaseOnCost();
-        int nodeNum=200;
-        int edgeNum=10000;
-        int maxDelay=25;
-        int spNum=3;
-        int startPoint=20;
-        int desPoint=30;
-        int times=10;
-        long startTime;
-        long  endTime;
-
-        ILPAlgorithm ilpAlgorithm=new ILPAlgorithm();
-        String csvData[][]=new String[times][CSVCol.colNum];
-        CSVCol col=new CSVCol();
-        for(int i=0;i<times;i++)
-        {
-            csvData[i][col.maxDelay]=Integer.toString(maxDelay);
-            csvData[i][col.graphId]=Integer.toString(i);
-            GraphRandGen graphRandGen=new GraphRandGen();
-            MyGraph myGrap=graphRandGen.generateRandomGraph(nodeNum,edgeNum);
-            startTime=System.currentTimeMillis();
-            kRSPResult result=ilpAlgorithm.solveWithGLPK(myGrap,startPoint,desPoint,spNum,maxDelay);
-            endTime=System.currentTimeMillis();
-            if(result!=null) {
-                System.out.println(result.costSum + "   " + result.delaySum);
-                System.out.println(result.paths);
-                csvData[i][col.ILPCost] = Double.toString(result.costSum);
-                csvData[i][col.ILPDelay] = Double.toString(result.delaySum);
-            }
-            csvData[i][col.ILPRunTime]=Double.toString((endTime-startTime)/1000.0);
-            System.out.println("----------------");
-
-
-            startTime=System.currentTimeMillis();
-            List<List<Integer>>ksp=algorithm.getKSP(myGrap,startPoint,desPoint,spNum,maxDelay);
-            endTime=System.currentTimeMillis();
-            if(ksp!=null)
-            {
-                System.out.println(ksp);
-                int cost=algorithm.countAttr(myGrap,ksp,Attr.cost);
-                int delay=algorithm.countAttr(myGrap,ksp,Attr.delay);
-                System.out.println("cost: "+cost);
-                System.out.println("delay: "+delay);
-                csvData[i][col.newAlgCost]=Integer.toString(cost);
-                csvData[i][col.newAlgDelay]=Integer.toString(delay);
-                csvData[i][col.costRatio]=Double.toString(cost/result.costSum);
-                csvData[i][col.delayRatio]=Double.toString(delay/result.delaySum);
-            }else{
-                System.out.println("没有结果");
-            }
-            csvData[i][col.newAlgRunTime]=Double.toString((endTime-startTime)/1000.0);
-            System.out.println("++++++++++++++++");
-            csvData[i][col.nodeNum]=Integer.toString(nodeNum);
-            csvData[i][col.edgeNum]=Integer.toString(edgeNum);
-        }
-        CSVRecorder recorder=new CSVRecorder();
-        recorder.writeToCSV("data.csv",csvData);
     }
 }

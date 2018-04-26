@@ -1,4 +1,4 @@
-package GraphIO;
+package graphIO;
 
 import com.csvreader.CsvWriter;
 

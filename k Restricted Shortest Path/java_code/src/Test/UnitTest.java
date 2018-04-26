@@ -1,6 +1,6 @@
-package Test;
+package test;
 
-import Algorithm.KRSPAlgBaseOnCost;
+import algorithm.KRSPAlgBaseOnCost;
 
 import java.util.ArrayList;
 import java.util.Arrays;

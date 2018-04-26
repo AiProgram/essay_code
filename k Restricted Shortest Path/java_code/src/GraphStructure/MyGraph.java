@@ -1,4 +1,4 @@
-package GraphStructure;
+package graphStructure;
 
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;

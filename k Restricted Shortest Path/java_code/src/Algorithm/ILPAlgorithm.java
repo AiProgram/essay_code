@@ -1,13 +1,11 @@
-package Algorithm;
+package algorithm;
 
-import GraphIO.GraphRandGen;
-import GraphStructure.MyGraph;
-import com.sun.jdi.IntegerType;
+import graphIO.GraphRandGen;
+import graphStructure.MyGraph;
 import org.gnu.glpk.*;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
-import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.util.ArrayList;
