@@ -136,3 +136,81 @@ List<List<Integer>> getKSPWithCost(MyGraph myGraph,int startPoint,int desPoint,i
 + *desPoint*:终点
 + *spNum*:k的取值
 + 后面的`getKSPWithDelay`功能类似，只是将*weight*设置为*delay*
+
+```java
+int countAttr(MyGraph graph,List<List<Integer>>paths,Attr attr)
+```
++ 统计路径集合在一个图中某一种属性之和，这个属性可以是*delay*或者*cost*
++ *graph*:图
++ *paths*:路径集合
++ *attr*:指示统计哪一种属性
+
+```java
+int getSplitNode(int oriNode,int upperNum,int nodeNum)
+```
++ 算法需要用到的一个辅助图中点需要被拆分成有上标的点。考虑到方便处理，这些拆开的点仍然使用整数表示，但是与上标形式需要换算
++ 本方法获得上标点的整数形式
++ *oriNode*:点的下标
++ *upperNum*:点的上标
++ *nodeNum*:原图点的总数
++ 后面的`getOriNode`作用相反
+
+```java
+MyGraph getCycleAuxGraph(MyGraph myGraph,int delayBound,int desPoint)
+```
++ 获得用于求二分环的辅助图
+
+```java
+List<Integer> getOriPath(List<Integer>path,int nodeNum)
+```
++ 将路径中的每一个被拆开的点还原成它的下标
+
+```java
+List<Integer>findNegativeCycle(MyGraph graph,int startPoint)
+```
++ 寻找一个负环并且返回
+
+```java
+List<Integer> getBestCycle(MyGraph myGraph,List<Integer>ori_cycle)
+```
++ 在找环时，找到的环可能不是简单环，这时提取出里面最好的环返回
+
+```java
+List<Integer>getBicameralCycle(MyGraph reverseGraph,MyGraph oriGraph,List<List<Integer>>ksp,int delayBound,int startPoint,int desPoint,int spNum,int maxCost)
+```
++ 寻找二分环并且返回
+
+```java
+List<List<Integer>>cyclePathXor(List<Integer>cycle,List<List<Integer>>paths,int spNum)
+```
++ 用找到的二分环优化当前的最佳解的路径集合
+
+```java
+List<List<Integer>>getKSP(MyGraph graph,int startPoint,int desPoint,int spNum,int maxDelay)
+```
++ 新的kRSP算法的主入口，返回找到的k条不相交路径
++ *graph*:原始图
++ *startPoint*:起点
++ *desPoint*:终点
++ *spNum*:问题中k的取值
++ *maxDelay*:问题中*delay*的上限
+
+### **类** *ILPAlgorithm*
++ 线性规划算法的主类
+
+**方法**
+
+```java
+List<List<Integer>> getPaths(MyGraph graph,List<DefaultWeightedEdge> edgeList,int startPoint,int desPoint)
+```
++ 由于线性规划算法中每一条边的使用都是用变量表示了，本方法用于将得到的解中的变量取值还原为路径
+
+```java
+kRSPResult write_lp_solution(glp_prob lp,MyGraph graph,List<DefaultWeightedEdge>graphEdgeList,int startPoint,int desPoint)
+```
++ 将线性规划的解还原为kRSP问题的解
+
+```java
+kRSPResult solveWithGLPK(MyGraph myGraph,int startPoint,int desPoint,int pathNum,int maxDelay)
+```
++ 线性规划算法的主入口，返回最后找到的路径集合
