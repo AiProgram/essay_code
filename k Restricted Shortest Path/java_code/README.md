@@ -176,7 +176,7 @@ List<Integer> getBestCycle(MyGraph myGraph,List<Integer>ori_cycle)
 + 在找环时，找到的环可能不是简单环，这时提取出里面最好的环返回
 
 ```java
-List<Integer>getBicameralCycle(MyGraph reverseGraph,MyGraph oriGraph,List<List<Integer>>ksp,int delayBound,int startPoint,int desPoint,int spNum,int maxCost)
+List<Integer> getBicameralCycle(MyGraph reverseGraph,MyGraph oriGraph,List<List<Integer>>ksp,int delayBound,int startPoint,int desPoint,int spNum,int maxCost)
 ```
 + 寻找二分环并且返回
 
@@ -186,7 +186,7 @@ List<List<Integer>>cyclePathXor(List<Integer>cycle,List<List<Integer>>paths,int 
 + 用找到的二分环优化当前的最佳解的路径集合
 
 ```java
-List<List<Integer>>getKSP(MyGraph graph,int startPoint,int desPoint,int spNum,int maxDelay)
+List<List<Integer>> getKSP(MyGraph graph,int startPoint,int desPoint,int spNum,int maxDelay)
 ```
 + 新的kRSP算法的主入口，返回找到的k条不相交路径
 + *graph*:原始图
@@ -214,3 +214,8 @@ kRSPResult write_lp_solution(glp_prob lp,MyGraph graph,List<DefaultWeightedEdge>
 kRSPResult solveWithGLPK(MyGraph myGraph,int startPoint,int desPoint,int pathNum,int maxDelay)
 ```
 + 线性规划算法的主入口，返回最后找到的路径集合
+
+----
+## 包 *main*
+### **类** *main*
++ 整个问题算法的运行主文件，也是使用示例

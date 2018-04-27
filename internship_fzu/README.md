@@ -52,6 +52,7 @@ boolean saveGraphToJson(myGraph myGraph,String graphFileName)
 ### **类** *CSVRecorder*
 **成员**
 + *csvPath*:用于储存记录文件的目录
+
 **方法**
 ```java
 void saveToCSV(String csvFileName,String data[][])
@@ -72,6 +73,7 @@ void saveToCSV(String csvFileName,String data[][])
 ## 包 *alg.NewAlg*
 ### **类** *NewAlg*
 + 新算法的主类
+
 **成员**
 + *INFINITY*:用于表示无限大
 
@@ -120,6 +122,7 @@ double solveWithGLPK(ILPGraph myGraph,int probId,LPSolver lpSolver)
 
 ### **类** *MWLD*
 + `MWLD`算法的主类
+
 **方法**
 
 ```java
