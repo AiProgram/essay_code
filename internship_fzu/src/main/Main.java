@@ -18,7 +18,7 @@ import static java.lang.StrictMath.round;
 
 public class Main {
     public static void main(String args[]){
-        int time=100;
+        int time=1;
         String resultArr[][]=new String[time][CSVCol.colNum];//用于记录算法运行数据记录进入csv表格中
         long startTime;
         long endTime;
@@ -39,9 +39,13 @@ public class Main {
             startTime=System.currentTimeMillis();
             try {
                 graph = NewAlg.getResidualGraph(myGraph, 1);
-                double w = NewAlg.RSPNoRecrusive(graph);
-                double w2 = getSPWeight(myGraph.graph, myGraph.shortestPath.getVertexList());
-                newResult=w+w2;
+                NewAlg.RSPResult result = NewAlg.RSPNoRecrusive(graph);
+                List<Integer>[] paths=new List[2];
+                paths=NewAlg.pathXor(result.path,myGraph.shortestPath.getVertexList());
+//                double w2 = getSPWeight(myGraph.graph, myGraph.shortestPath.getVertexList());
+//                newResult=result.weight+w2;
+                newResult=getSPWeight(myGraph.graph,paths[0])+getSPWeight(myGraph.graph,paths[1]);
+                resultArr[t][CSVCol.paths]=paths[0].toString()+","+paths[1].toString();
             }catch (Exception e){
                 e.printStackTrace();
             }

@@ -1,14 +1,17 @@
 package alg.NewAlg;
 
+import alg.Util.Util;
 import myGraph.MyGraph;
 import org.jgrapht.GraphPath;
+import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.alg.shortestpath.BellmanFordShortestPath;
+import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.sql.Array;
+import java.util.*;
 
 public class NewAlg {
     static double INFINITY=1<<30;
@@ -134,7 +137,11 @@ public class NewAlg {
         return residualGraph;
     }
 
-    public static double RSPNoRecrusive(MyGraph myGraph){
+    public static class RSPResult{
+        public double weight;
+        public List<Integer>path;
+    }
+    public static RSPResult RSPNoRecrusive(MyGraph myGraph){
         List<Integer> path;
         int startPoint=myGraph.startPoint;
         int sinkPoint=myGraph.sinkPoint;
@@ -200,9 +207,86 @@ public class NewAlg {
                 }
             }
         }
-        return dynMat[sinkPoint][maxComVertex];
+
+        //获取结果路径
+        path=new ArrayList<>();
+        int curNode=sinkPoint;
+        int newNode;
+        int curComVertx=maxComVertex;
+        while(curNode!=startPoint)
+        {
+            newNode=pathMap[curNode][curComVertx];
+            if(newNode==curNode)
+            {
+                curComVertx-=1;
+                continue;
+            }
+            path.add(curNode);
+            DefaultWeightedEdge edge=(DefaultWeightedEdge) myGraph.graph.getEdge(newNode,curNode);
+            int weight=myGraph.costMap.get(edge);
+            curComVertx=curComVertx-weight;
+            curNode=newNode;
+        }
+        path.add(startPoint);
+        Collections.reverse(path);
+
+        RSPResult result=new NewAlg.RSPResult();
+        result.weight=dynMat[sinkPoint][maxComVertex];
+        result.path=path;
+        return result;
     }
 
+    //这里要求path1是没有反向边的路径
+    public static List<Integer>[] pathXor(List<Integer>path1,List<Integer>path2){
+        DefaultDirectedGraph<Integer,DefaultEdge> graph=new DefaultDirectedGraph<>(DefaultEdge.class);
+        int startPoint=path1.get(0);
+        int sinkPoint=path1.get(path1.size()-1);
+
+        Iterator vit=path1.iterator();
+        List<Integer> pathP=new ArrayList<>();
+        List<Integer> pathQ=new ArrayList<>();
+
+        while(vit.hasNext()){
+            int node=(int)vit.next();
+            graph.addVertex(node);
+        }
+        vit=path2.iterator();
+        while(vit.hasNext()){
+            int node=(int)vit.next();
+            graph.addVertex(node);
+        }
+
+        for(int i=0;i<path1.size()-1;i++)
+        {
+            int source=path1.get(i);
+            int target=path1.get(i+1);
+            graph.addEdge(source,target);
+        }
+        for(int i=0;i<path2.size()-1;i++)
+        {
+            int source=path2.get(i);
+            int target=path2.get(i+1);
+            if(graph.containsEdge(target,source))
+                graph.removeAllEdges(target,source);
+            else
+                graph.addEdge(source,target);
+        }
+        AllDirectedPaths<Integer,DefaultEdge> directedPaths=new AllDirectedPaths<>(graph);
+        pathP=directedPaths.getAllPaths(startPoint,sinkPoint,true,null).get(0).getVertexList();
+
+        for(int i=0;i<pathP.size()-1;i++)
+        {
+            int source=pathP.get(i);
+            int target=pathP.get(i+1);
+            graph.removeAllEdges(source,target);
+        }
+        pathQ=directedPaths.getAllPaths(startPoint,sinkPoint,true,null).get(0).getVertexList();
+
+        List<Integer>[] result=new List[2];
+        result[0]=pathP;
+        result[1]=pathQ;
+        return result;
+    }
 
     public static void main(String args[]){
     }

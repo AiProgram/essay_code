@@ -22,8 +22,9 @@ public class CSVCol {
     public static int mwldRunTime=11;
     public static int mwldResult=12;
 
-    public static int colNum=13;//列的总数量
+    public static int paths=13;
+    public static int colNum=14;//列的总数量
     public static String csvHeader[]={"graphId","nodeNum","edgeNum","startPoint","sinkPoint","maxComVertex","graphFile"
-    ,"newAlgRunTime","newAlgResult", "ILPRunTime","ILPResult","mwldRunTime","mwldResult","colNum"
+    ,"newAlgRunTime","newAlgResult", "ILPRunTime","ILPResult","mwldRunTime","mwldResult","paths","colNum"
     };
 }

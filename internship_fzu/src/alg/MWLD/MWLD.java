@@ -16,7 +16,7 @@ public class MWLD {
         auxGraph.startPoint=myGraph.startPoint;
         auxGraph.sinkPoint=myGraph.sinkPoint;
         auxGraph.maxComVertex=myGraph.maxComVertex-1;
-        return NewAlg.RSPNoRecrusive(auxGraph);
+        return NewAlg.RSPNoRecrusive(auxGraph).weight;
     }
 
     public static MyGraph mwldGetAuxGraph(DefaultDirectedWeightedGraph graph,int sinkPoint){
