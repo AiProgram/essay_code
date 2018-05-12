@@ -10,24 +10,26 @@ import graphIO.GraphWriter;
 import graphStructure.MyGraph;
 
 import java.util.List;
+import java.util.Random;
 
 public class Main {
     public static void main(String args[]){
 
         KRSPAlgBaseOnDelay algorithm=new KRSPAlgBaseOnDelay();
-        int nodeNum=100;
-        int edgeNum=1000;
+        int nodeNum=900;
+        int edgeNum=81000;
         int maxDelay=20;
         int spNum=5;
         int startPoint=20;
         int desPoint=40;
-        int times=100;
+        int times=50;
         long startTime;
         long  endTime;
 
 
 
         GraphWriter writer=new GraphWriter();
+        Random random=new Random();
 
 
         String csvData[][]=new String[times][CSVCol.colNum];
@@ -37,6 +39,12 @@ public class Main {
         {
             GraphRandGen graphRandGen=new GraphRandGen();
             MyGraph myGrap=graphRandGen.generateRandomGraph(nodeNum,edgeNum);
+
+            int tmp;
+            startPoint=random.nextInt(nodeNum);
+            while((tmp=random.nextInt(nodeNum))==startPoint);
+            desPoint=tmp;
+
             String graphFileName=nodeNum+"-"+edgeNum+"-"+i+".json";
             writer.saveGraphToJson(myGrap,graphFileName);
 
