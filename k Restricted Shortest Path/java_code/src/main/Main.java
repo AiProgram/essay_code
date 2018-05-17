@@ -16,8 +16,8 @@ public class Main {
     public static void main(String args[]){
 
         KRSPAlgBaseOnDelay algorithm=new KRSPAlgBaseOnDelay();
-        int nodeNum=900;
-        int edgeNum=81000;
+        int nodeNum=1000;
+        int edgeNum=100000;
         int maxDelay=20;
         int spNum=5;
         int startPoint=20;
