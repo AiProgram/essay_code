@@ -1,7 +1,7 @@
-package algorithm;
+package alg;
 
 import graphIO.GraphRandGen;
-import graphStructure.MyGraph;
+import myGraph.MyGraph;
 import org.gnu.glpk.*;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.Map;
 
 public class ILPAlgorithm {
-    public  kRSPResult solveWithGLPK(MyGraph myGraph,int startPoint,int desPoint,int pathNum,int maxDelay)
+    public KRSPResult solveWithGLPK(MyGraph myGraph, int startPoint, int desPoint, int pathNum, int maxDelay)
     {
         int ret;
-        kRSPResult result;
+        KRSPResult result;
         glp_prob lp;
         glp_iocp parm;
         SWIGTYPE_p_int index;
@@ -146,12 +146,12 @@ public class ILPAlgorithm {
 
     }
 
-    static kRSPResult write_lp_solution(glp_prob lp,MyGraph graph,List<DefaultWeightedEdge>graphEdgeList,int startPoint,int desPoint) {//获取lp最后的结果
+    static KRSPResult write_lp_solution(glp_prob lp, MyGraph graph, List<DefaultWeightedEdge>graphEdgeList, int startPoint, int desPoint) {//获取lp最后的结果
         int i;
         int n;
         String name;
         double val;
-        kRSPResult result=new kRSPResult();
+        KRSPResult result=new KRSPResult();
         name = GLPK.glp_get_obj_name(lp);
         val = GLPK.glp_mip_obj_val(lp);
         System.out.print(name);
@@ -219,7 +219,7 @@ public class ILPAlgorithm {
         GraphRandGen graphRandGen=new GraphRandGen();
         MyGraph myGrap=graphRandGen.generateRandomGraph(60,800);
         ILPAlgorithm algorithm=new ILPAlgorithm();
-        kRSPResult result=algorithm.solveWithGLPK(myGrap,1,20,4,32);
+        KRSPResult result=algorithm.solveWithGLPK(myGrap,1,20,4,32);
         System.out.println(result.costSum+"   "+result.delaySum);
         System.out.println(result.paths);
     }

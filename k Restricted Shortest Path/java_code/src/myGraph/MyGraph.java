@@ -1,4 +1,4 @@
-package graphStructure;
+package myGraph;
 
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -37,6 +37,13 @@ public class MyGraph {
         costMap.put(newEdge,cost);
         delayMap.put(newEdge,delay);
         return newEdge;
+    }
+
+    public DefaultWeightedEdge addNewEdgeWithNode(int src,int tar,int cost,int delay)//封装好的添加新边
+    {
+        this.graph.addVertex(src);
+        this.graph.addVertex(tar);
+        return addNewEdge(src,tar,cost,delay);
     }
 
     public void removeAllEdges(int src,int tar){

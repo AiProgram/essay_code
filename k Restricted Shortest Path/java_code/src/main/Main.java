@@ -1,19 +1,41 @@
 package main;
 
-import algorithm.ILPAlgorithm;
-import algorithm.KRSPAlgBaseOnDelay;
-import algorithm.kRSPResult;
+import Util.GraphType;
+import Util.GroupRuner;
+import Util.RunCodeGroup;
+import alg.ILPAlgorithm;
+import alg.KRSPAlgBaseOnDelay;
+import alg.KRSPResult;
 import graphIO.CSVCol;
 import graphIO.CSVRecorder;
 import graphIO.GraphRandGen;
 import graphIO.GraphWriter;
-import graphStructure.MyGraph;
+import myGraph.MyGraph;
 
 import java.util.List;
 import java.util.Random;
 
 public class Main {
-    public static void main(String args[]){
+    public void runCodeGroup(){
+            RunCodeGroup runCodeGroup=new RunCodeGroup();
+            GroupRuner runer=new GroupRuner() {
+                @Override
+                public GraphType fileFilter(String fileName) {
+                    return GraphType.JsonGraph;
+                }
+
+                @Override
+                public boolean runOnSingeleGraph(MyGraph oriGraph, String fileName) {
+                    System.out.println(fileName);
+                    KRSPAlgBaseOnDelay alg=new KRSPAlgBaseOnDelay();
+                    List<List<Integer>>ksp=alg.getKSP(oriGraph,0,20,3,9);
+                    System.out.println(ksp);
+                    return false;
+                }
+            };
+            runCodeGroup.runGroup(runer);
+    }
+    public void randomAlgTest(){
 
         KRSPAlgBaseOnDelay algorithm=new KRSPAlgBaseOnDelay();
         int nodeNum=1000;
@@ -55,7 +77,7 @@ public class Main {
             csvData[i][col.graphFile]=graphFileName;
 
             startTime=System.currentTimeMillis();
-            kRSPResult result=ilpAlgorithm.solveWithGLPK(myGrap,startPoint,desPoint,spNum,maxDelay);
+            KRSPResult result=ilpAlgorithm.solveWithGLPK(myGrap,startPoint,desPoint,spNum,maxDelay);
             endTime=System.currentTimeMillis();
             if(result!=null) {
                 System.out.println(result.costSum + "   " + result.delaySum);
@@ -95,5 +117,8 @@ public class Main {
         }
         CSVRecorder recorder=new CSVRecorder();
         recorder.writeToCSV("data.csv",csvData);
+    }
+    public static void main(String args[]){
+
     }
 }

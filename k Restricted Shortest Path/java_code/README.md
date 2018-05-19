@@ -1,5 +1,5 @@
 # KSP问题算法JAVA版
-## 包 *graphStructure*
+## 包 *myGraph*
 ### **类** *MyGraph*
 + 由于`JGrpahT`中提供的图最多只能允许边有一种相关属性，所以本类将`JGraphT`提供的图进行包装，储存更多相关属性并且提供更多操作
 
@@ -105,7 +105,7 @@ void writeToCSV(String csvFileName, String data[][])
 ### **类** *csvCol*
 + 用于记录csv文件中数据储存的具体格式
 ---
-## 包 *algorithm*
+## 包 *alg*
 ### **类** *KRSPAlgBaseOnDelay*
 + KRSP新算法的主类，但是是基于*delay*的
 
